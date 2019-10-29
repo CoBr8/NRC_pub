@@ -1,3 +1,6 @@
+# https://matplotlib.org/3.1.1/api/_as_gen/matplotlib.pyplot.psd.html
+# https://en.wikipedia.org/wiki/Spectral_density
+# 
 import numpy as np
 from numpy.fft import fft,ifft,fft2,ifft2
 import matplotlib.pyplot as plt
