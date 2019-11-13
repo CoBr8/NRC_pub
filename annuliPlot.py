@@ -31,7 +31,12 @@ noi = G2D.max() * NoiPer * np.random.normal(size=G2D.shape)
 
 G2D += noi
 
-FFT_G2D = fft2(G2D)
+# When the input a is a time-domain signal and A = fft(a),
+# np.abs(A) is its amplitude spectrum and
+# np.abs(A)**2 is its power spectrum.
+# The phase spectrum is obtained by np.angle(A).
+
+FFT_G2D = fft2(G2D)  # amplitude spectrum when np.abs(FFT_G2D) is used
 FFT_G2D = np.roll(FFT_G2D, (FFT_G2D.shape[0] // 2) - 1, axis=(0, 1))
 
 MidMapX = FFT_G2D.shape[1] // 2 - 1
@@ -44,16 +49,16 @@ PSD_rolled = np.roll(PSD, PSD.shape[0]//2-1, axis=(0, 1))
 AC = ifft2(PSD)
 AC_rolled = np.roll(AC.real, AC.shape[0]//2-1, axis=(0, 1))
 AC_rolled[MidMapY, MidMapX] = 0
+
 # Binning
 loc = list(permutations(np.arange(0, G2D.shape[0]), 2))
-radius, pows = [], []
+radius, pows = [0], [PSD_rolled[PSD_rolled.shape[0]//2-1, PSD_rolled.shape[1]//2-1]]
 
 for idx in loc:
     r = int(((idx[0] - MidMapX) ** 2 + (idx[1] - MidMapY) ** 2) ** (1 / 2) + 0.5)
     Pow = PSD_rolled[idx[0], idx[1]].real
     radius.append(r)
     pows.append(Pow)
-
 
 fig1 = plt.figure(figsize=(20, 20))
 grid = plt.GridSpec(3, 4, hspace=0.4, wspace=0.2)
@@ -87,7 +92,7 @@ colourbar(im2)
 acIM.set_title('Auto-correlation')
 acIM.hlines(y=AC_rolled.shape[0]//2-1, xmin=0, xmax=AC_rolled.shape[1], color='r', linestyles='--', linewidths=0.3)
 acIM.vlines(x=AC_rolled.shape[1]//2-1, ymin=0, ymax=AC_rolled.shape[0], color='r', linestyles='--', linewidths=0.3)
-im3 = acIM.imshow(AC_rolled, origin='lower')
+im3 = acIM.imshow(AC_rolled.real, origin='lower')
 colourbar(im3)
 
 psdIM.set_title('Power Spectrum')
@@ -96,10 +101,9 @@ psdIM.vlines(x=PSD_rolled.shape[1]//2-1, ymin=0, ymax=PSD_rolled.shape[0], color
 im4 = psdIM.imshow(PSD_rolled.real, origin='lower')
 colourbar(im4)
 # row 3
-AvgScatter.set_title('Amplitudes at an integer distance')
-AvgScatter.set_xlabel('distance from (0,0) \n'
-                      '(399,399) on the 2d maps')
-AvgScatter.set_ylabel('Amplitude of Power spectrum')
+AvgScatter.set_title('Dispersion of Signal power at a a given frequency')
+AvgScatter.set_xlabel('Frequency')
+AvgScatter.set_ylabel('Power')
 im5 = AvgScatter.scatter(radius[::200], pows[::200], marker='2', alpha=0.3, color='red')
 
 fig1.suptitle('Generated Gaussian Map')
