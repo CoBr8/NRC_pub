@@ -24,19 +24,26 @@ x = np.arange(len_x)
 y = np.arange(len_y)
 X, Y = np.meshgrid(x, y)
 
-GaussParams = [10, len_x // 2 - 1 + x_shift, len_y // 2 - 1 + y_shift, 10, 10, 0]
+GaussParams = [10,  # amplitude
+               len_x // 2 - 1 + x_shift,  # Mean x value
+               len_y // 2 - 1 + y_shift,  # Mean Y value
+               10,  # Sigma X
+               10,  # Sigma Y
+               0  # theta
+               ]
 
 G2D = Gaussian2D().evaluate(X, Y, *GaussParams)
 noi = G2D.max() * NoiPer * np.random.normal(size=G2D.shape)
 
-G2D += noi
+G2D_Noi = G2D + noi
+
 
 # When the input a is a time-domain signal and A = fft(a),
 # np.abs(A) is its amplitude spectrum and
 # np.abs(A)**2 is its power spectrum.
 # The phase spectrum is obtained by np.angle(A).
 
-FFT_G2D = fft2(G2D)  # amplitude spectrum when np.abs(FFT_G2D) is used
+FFT_G2D = fft2(G2D_Noi)  # amplitude spectrum when np.abs(FFT_G2D) is used
 FFT_G2D = np.roll(FFT_G2D, (FFT_G2D.shape[0] // 2) - 1, axis=(0, 1))
 
 MidMapX = FFT_G2D.shape[1] // 2 - 1
@@ -51,7 +58,7 @@ AC_rolled = np.roll(AC.real, AC.shape[0]//2-1, axis=(0, 1))
 AC_rolled[MidMapY, MidMapX] = 0
 
 # Binning
-loc = list(permutations(np.arange(0, G2D.shape[0]), 2))
+loc = list(permutations(np.arange(0, G2D_Noi.shape[0]), 2))
 radius, pows = [0], [PSD_rolled[PSD_rolled.shape[0]//2-1, PSD_rolled.shape[1]//2-1]]
 
 for idx in loc:
@@ -77,9 +84,9 @@ acIM.get_shared_y_axes().join(acIM, psdIM)
 
 # row 1
 MapIM.set_title('Map')
-MapIM.hlines(y=G2D.shape[0]//2-1, xmin=0, xmax=G2D.shape[1], color='r', linestyles='--', linewidths=0.3)
-MapIM.vlines(x=G2D.shape[1]//2-1, ymin=0, ymax=G2D.shape[0], color='r', linestyles='--', linewidths=0.3)
-im1 = MapIM.imshow(G2D, origin='lower')
+MapIM.hlines(y=G2D_Noi.shape[0]//2-1, xmin=0, xmax=G2D_Noi.shape[1], color='r', linestyles='--', linewidths=0.3)
+MapIM.vlines(x=G2D_Noi.shape[1]//2-1, ymin=0, ymax=G2D_Noi.shape[0], color='r', linestyles='--', linewidths=0.3)
+im1 = MapIM.imshow(G2D_Noi, origin='lower')
 colourbar(im1)
 
 fftIM.set_title('FFT')
