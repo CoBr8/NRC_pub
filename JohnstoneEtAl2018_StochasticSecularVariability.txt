@@ -9,26 +9,25 @@ Purpose: 	Analyze the first 18 months of the JCMT Transient Survey to search for
 		evidence of stochastic and secular submillimeter variability within eight 
 		star-forming regions.
 
-Problem:	JCMT-Transiet is meant to uncover rare transient phenomena which is mimicked
-		by purely statistical large random deviations. Much care is needed to 
-		discern whether the source is stochastically varrying or if it truely is
-		a statistical outlier due to random noise
+Problem:	"JCMT-Transiet is meant to uncover rare transient phenomena which is 
+		mimicked by purely statistical large random deviations. Much care is 
+		needed to discern whether the source is stochastically varrying or if it 
+		truely is a statistical outlier due to random noise"
 
-Conclusion:	Stochastic varibility above the uncertainty is found in less that 0.1% of the
-		ensemble points. Less than 1% of the protostellar subsample show variability.
-		No source that is unassociated with a protostar shows signs of stochastic
-		variability. Few protostar have variations of >10% amplitude in a year. 10% 
-		of the sample vary by ~5% over a year. 
+Conclusion:	- Stochastic varibility is found in less that 0.1% of the ensemble. <1% of 
+		the protostellar sample show variability. No source that is unassociated 
+		with a protostar shows signs of stochastic variability. 
+		
+		- Few protostar have variations of >10% with a one year period. 10% of the 
+		sample vary by ~5% over a year.
 
 +========================================================================================+
-Q?: What about longer than a 1 year variability? 
-	Do signs point towards more protostars varying with larger amplitudes?
-	i.e: EC53 has 10% variation on an 18 month period do others follow this trend?
+Q?: 	What are "radio synchrotron flares"? 
 
-Q?: What are "radio synchrotron flares"? What causes them? Are they significant in 
-	determining whether or not an obj. is a stochastic varibile?
-
-Q?: 
+Q?: 	If the variation in mass accretion is between the magnetorotational instability 
+	and gravitational instability does this suggest it's a coupling of the two 
+	instabilities or could it be a third non-evident source of accretion?
+	 
 +========================================================================================+
 
 - Uncertainty in the faint sources is dominated by the relatively uniform noise
@@ -36,12 +35,13 @@ Q?:
 - The Standard deviation of the data falls near the fiducial model
 - EC53 is the only outlier in the stochastic data plots
 - Robust statistical investigation into outlier points is not included in this paper
-
+- 
 
 # Definitions:
 # +======================================================================================+
 Stochastic Variability:		Random variations in variability, eg. "bursts of accretion"
 ----------------------
+
 Secular Variability:		Temporally changing variation, linear increase/decrease 
 --------------------		eg. accreting material at a steady rate. Non-burst like 
 				accretion
