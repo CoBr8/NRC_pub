@@ -1,0 +1,48 @@
+CORE COMPETENCIES
+=================
+Competency 				Assessment
+----------				----------
+Personal Management 			Developing
+Communication 				Developing
+	    I.   Communicating with other clearly and confidently
+	    II.  Asking technical and other questions when I am confused or need more guidance or suggestions.
+	    III. Asking for and being able to give good, concise, and constructive criticism .
+Managing Information 			Developing
+Research and Analysis 			Beginning
+	    I.   Qualitatively assess the information I'm reading, ingesting it in a timely manner
+	    II.  Being able to recognize a previous researchs use, importance, and relevance to my project
+	    III. Being able to apply the methods describe in other papers directly or through adaptation to fit the needs of my project.
+Project and Task Management 		Developing
+Teamwork 				Developing
+Commitment to Quality 			Beginning
+Professional Behaviour 			Accomplished
+Social Responsibility 			Developing
+Continuous Learning 			Developing 	
+	    I.   Confidently applying the information that I learned in my current post-secondary period to a professional work setting.
+	    II.  Adapt what I learn as well as to asborb new information and apply both to achieve a work specific goal
+	    III. Take what I've learned through this co-op with me back to school and onto my next position.
+
+DISCIPLINE SPECIFIC COMPETENCIES 
+===================
+Competency 				Assessment
+----------				----------
+Physics and Astronomy 			Beginning
+Scientific Method 			Beginning
+Computation			 	Developing
+	    I.   Learning how to manipulate new data sets (in this situation .FITS astro data) and apply mathematical methods to these data sets.
+	    II.  Learning new packages and languages/environments (astropy, statsmodels, starlink, IDL etc)
+	    III. Understand how and why the data is stored in a .FITS file and the technical and small nuances of data of this type.
+	    IV.  Be able to automate and simplify the processes developed in this term so it is easier for the end user.
+	    V.   Document and provide explanations of the code I produce so those who follow in my footsteps are better able to understand my code and can build off of it in future iterations.
+Field Work 				No Demonstrated Achievement
+Laboratory Work 			Beginning
+Education and Training 			No Demonstrated Achievement
+
+INTERCULTURAL COMPETENCIES
+==========================
+Competency 				Assessment
+----------				----------
+Strategic Thinking 			Beginning
+Intercultural Knowledge 		Beginning
+Intercultural Motivation 		Beginning
+Appropriate Behaviour 			Developing
