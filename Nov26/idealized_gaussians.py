@@ -27,9 +27,10 @@ def auto_correlate(epoch=None, clipped_side=400):
     if epoch is None:
         raise Exception('You need to pass a 2D map for this function to work')
     else:
-        mid_map_x, mid_map_y = epoch.shape[1] // 2 - 1, epoch.shape[0] // 2 - 1
+        mid_map_x, mid_map_y = epoch.shape[1] // 2, epoch.shape[0] // 2
         clipped_epoch = epoch[mid_map_y - clipped_side // 2:mid_map_y + clipped_side // 2,
-                              mid_map_x - clipped_side // 2:mid_map_x + clipped_side // 2]
+                              mid_map_x - clipped_side // 2:mid_map_x + clipped_side // 2
+                              ]
     ac = ifft2(fft2(clipped_epoch)*fft2(clipped_epoch).conj())
     return fftshift(ac)
 
@@ -61,10 +62,10 @@ ac_map_2 = auto_correlate(map_2)
 ac_division_map = ac_map_1 / ac_map_2
 
 one = fits.PrimaryHDU(ac_map_1.real)
-one.writeto('/home/broughtonco/documents/nrc_pub/Nov26//ac_map_1.fit')
+one.writeto('/home/broughtonco/documents/nrc_pub/Nov26/ac_map_1.fit')
 
 two = fits.PrimaryHDU(ac_map_2.real)
-two.writeto('/home/broughtonco/documents/nrc_pub/Nov26//ac_map_2.fit')
+two.writeto('/home/broughtonco/documents/nrc_pub/Nov26/ac_map_2.fit')
 
 three = fits.PrimaryHDU(ac_division_map.real)
 three.writeto('/home/broughtonco/documents/nrc_pub/Nov26/ac_div_map.fit')
