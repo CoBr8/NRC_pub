@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 from astropy.modeling.models import Gaussian2D
 import operator as op
+from astropy.io import fits
 
 
 # noinspection PyShadowingNames
@@ -42,7 +43,7 @@ amp_2 = 1
 FWHM_2 = 15
 sigma_2 = FWHM_2 / np.sqrt(8*np.log(2))
 
-midx = X.shape[0]//2-1
+midx = X.shape[1]//2-1
 midy = X.shape[0]//2-1
 
 # amp, x_mean, y_mean, x_sigma, y_sigma, theta
@@ -59,6 +60,14 @@ ac_map_2 = auto_correlate(map_2)
 
 ac_division_map = ac_map_1 / ac_map_2
 
+one = fits.PrimaryHDU(ac_map_1.real)
+one.writeto('/home/broughtonco/documents/nrc_pub/Nov26//ac_map_1.fit')
+
+two = fits.PrimaryHDU(ac_map_2.real)
+two.writeto('/home/broughtonco/documents/nrc_pub/Nov26//ac_map_2.fit')
+
+three = fits.PrimaryHDU(ac_division_map.real)
+three.writeto('/home/broughtonco/documents/nrc_pub/Nov26/ac_div_map.fit')
 # row, col = 6, 4
 #
 # fig = plt.figure(figsize=(10,10))
@@ -110,9 +119,9 @@ We then try to fit a line to determine the slope and intercept values for this d
 ac_div_data = []
 radius = []
 
-length = ac_division_map.shape[0]  # the map is square so we can use this for x and y
+length = ac_division_map.shape[0]  # the map is square always so we're not worried about it.
 midx = ac_division_map.shape[1]//2-1
-mid = ac_division_map.shape[0]//2-1
+midy = ac_division_map.shape[0]//2-1
 
 # determining all of the locations in the map using a cartesian product function
 loc = list(
@@ -139,7 +148,7 @@ r = np.array(r)
 ac_div_data = np.array(ac_div_data)
 
 # determining how many data points are in the first 10 pixel radius
-num = len(r[r <= 15])
+num = len(r[r <= 20])
 
 # squaring all the points in r so as to find a "more" linear fit.
 r2 = r**2
@@ -168,9 +177,8 @@ AC_DIV.plot(r2[1:num],
 
 AC_DIV.set_xlabel('$r^2$ from centre')
 AC_DIV.set_ylabel('Similarity in AC')
-fig.text(0.5, 0.5, AC_text, horizontalalignment='center', verticalalignment='center'
-         )
+
+fig.text(0.5, 0.5, AC_text, horizontalalignment='center', verticalalignment='center')
 
 plt.suptitle('{} / {}'.format('G1', "G2"))
-
-plt.show()
+plt.savefig('/home/broughtonco/documents/nrc_pub/Nov26/ac_div_map.png')
