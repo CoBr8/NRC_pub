@@ -110,7 +110,7 @@ We then try to fit a line to determine the slope and intercept values for this d
 ac_div_data = []
 radius = []
 
-length = ac_division_map.shape[0]  # the map is square always so we're not worried about it.
+length = ac_division_map.shape[0]  # the map is square so we can use this for x and y
 midx = ac_division_map.shape[1]//2-1
 mid = ac_division_map.shape[0]//2-1
 
