@@ -126,9 +126,8 @@ for i, j in loc:
 # Sorting the data based on the radius
 r, ac_div_data = zip(
     *sorted(
-        list(
-            zip(radius, ac_div_data)
-        ), key=op.itemgetter(0)
+        list(zip(radius, ac_div_data)), 
+	key=op.itemgetter(0)
     )
 )
 
