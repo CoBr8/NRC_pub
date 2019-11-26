@@ -109,7 +109,10 @@ We then try to fit a line to determine the slope and intercept values for this d
 # lists to append the 1D data
 ac_div_data = []
 radius = []
-length = ac_map_2.shape[0]  # the map is square always so we're not worried about it.
+
+length = ac_division_map.shape[0]  # the map is square always so we're not worried about it.
+midx = ac_division_map.shape[1]//2-1
+mid = ac_division_map.shape[0]//2-1
 
 # determining all of the locations in the map using a cartesian product function
 loc = list(
@@ -126,9 +129,8 @@ for i, j in loc:
 # Sorting the data based on the radius
 r, ac_div_data = zip(
     *sorted(
-        list(
-            zip(radius, ac_div_data)
-        ), key=op.itemgetter(0)
+        list(zip(radius, ac_div_data)),
+        key=op.itemgetter(0)
     )
 )
 
