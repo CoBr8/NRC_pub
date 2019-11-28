@@ -1,5 +1,5 @@
 import numpy as np
-from numpy.fft import ifft2, fftshift
+# from numpy.fft import ifft2, fftshift
 import matplotlib.pyplot as plt
 from itertools import product
 from astropy.io import fits
@@ -16,7 +16,7 @@ def colourbar(mappable):
     return figle.colorbar(mappable, cax=cax, format='%g')
 
 
-def correlate(epoch_1=None, epoch_2=None, clipped_side=400, clip_only=False):
+def correlate(epoch_1=None, epoch_2=None, clipped_side=400, clip_only=False, psd=False):
     from numpy.fft import fft2, ifft2, fftshift
     if clip_only:
         mid_map_x, mid_map_y = epoch_1.shape[1] // 2, epoch_1.shape[0] // 2
@@ -24,6 +24,14 @@ def correlate(epoch_1=None, epoch_2=None, clipped_side=400, clip_only=False):
                                 mid_map_x - clipped_side // 2:mid_map_x + clipped_side // 2
                                 ]
         return clipped_epoch
+
+    elif psd:
+        mid_map_x, mid_map_y = epoch_1.shape[1] // 2, epoch_1.shape[0] // 2
+        clipped_epoch = epoch_1[mid_map_y - clipped_side // 2:mid_map_y + clipped_side // 2,
+                                mid_map_x - clipped_side // 2:mid_map_x + clipped_side // 2
+                                ]
+        psd = fft2(clipped_epoch) * fft2(clipped_epoch).conj()
+        return fftshift(psd)
 
     elif epoch_1 is None:
         raise Exception('You need to pass a 2D map for this function to work')
@@ -46,15 +54,15 @@ def correlate(epoch_1=None, epoch_2=None, clipped_side=400, clip_only=False):
                                   mid_map_x_2 - clipped_side // 2:mid_map_x_2 + clipped_side // 2
                                   ]
         xcorr = ifft2(fft2(clipped_epoch_1)*fft2(clipped_epoch_2).conj())
-        return xcorr
+        return fftshift(xcorr)
 
 
 length = 200
 
-root = '/home/broughtonco/documents/nrc/data/IC348/'
+root = '/home/broughtonco/documents/nrc/data/OMC23/'
 files = os.listdir(root)
 
-FirstEpoch = fits.open('/home/broughtonco/documents/nrc/data/IC348/IC348_20151222_00019_850_EA3_cal.fit')
+FirstEpoch = fits.open('/home/broughtonco/documents/nrc/data/OMC23/OMC23_20151226_00036_850_EA3_cal.fit')
 FirstEpochDate = FirstEpoch[0].header['UTDATE']
 FirstEpochData = FirstEpoch[0].data[0]
 FED_MidMapX, FED_MidMapY = FirstEpochData.shape[1] // 2, FirstEpochData.shape[0] // 2
@@ -79,8 +87,8 @@ for item in sorted(dictionary1.items(), key=op.itemgetter(0)):
 
     G2D = correlate(G2D, clip_only=True)
     XCorr = correlate(epoch_1=G2D, epoch_2=FirstEpochData).real
-    PSD = fftshift(ifft2(correlate(G2D))).real
-    AC = fftshift(correlate(G2D)).real
+    PSD = correlate(G2D, psd=True).real
+    AC = correlate(G2D).real
 
     Clipped_G2D_LENGTH = np.arange(0, G2D.shape[0])
     loc = list(product(Clipped_G2D_LENGTH, Clipped_G2D_LENGTH))
@@ -92,13 +100,13 @@ for item in sorted(dictionary1.items(), key=op.itemgetter(0)):
     dat = [G2D.real, PSD.real, AC.real, XCorr.real]
 
     for data, name in zip(dat, Dat_Titles):
-        if os.path.exists('/home/broughtonco/documents/nrc/data/IC348/GeneratedMapsFits/{}_{}_{}.fit'.format(
+        if os.path.exists('/home/broughtonco/documents/nrc/data/OMC23/GeneratedMapsFits/{}_{}_{}.fit'.format(
                 obj, date, name)):
-            os.remove('/home/broughtonco/documents/nrc/data/IC348/GeneratedMapsFits/{}_{}_{}.fit'.format(
+            os.remove('/home/broughtonco/documents/nrc/data/OMC23/GeneratedMapsFits/{}_{}_{}.fit'.format(
                 obj, date, name))
         hdu = fits.PrimaryHDU(data)
         hdu.writeto(
-            '/home/broughtonco/documents/nrc/data/IC348/GeneratedMapsFits/{}_{}_{}.fit'.format(obj, date, name))
+            '/home/broughtonco/documents/nrc/data/OMC23/GeneratedMapsFits/{}_{}_{}.fit'.format(obj, date, name))
 
     for idx in loc:
         r = ((idx[0] - MidMapX) ** 2 + (idx[1] - MidMapY) ** 2) ** (1 / 2)
@@ -157,7 +165,7 @@ for item in sorted(dictionary1.items(), key=op.itemgetter(0)):
     AvgScatterPSD.set_xlabel('Frequency')
     AvgScatterPSD.set_ylabel('Power')
     AvgScatterPSD.set_yscale('log')
-    AvgScatterPSD.set_ylim(bottom=10**-7, top=10**7)
+    AvgScatterPSD.set_ylim(bottom=10**-3, top=10**9)
     im5 = AvgScatterPSD.scatter(radius, PSD_pows, marker=',', lw=0, alpha=0.3, color='red', s=1)
 
     AvgScatterAC.set_title('Auto Correlation')
@@ -165,13 +173,13 @@ for item in sorted(dictionary1.items(), key=op.itemgetter(0)):
     AvgScatterAC.set_ylabel('p-h')
     AvgScatterAC.set_yscale('log')
     AvgScatterAC.set_aspect('auto')
-    AvgScatterAC.set_ylim(bottom=10**-4, top=10**4)
+    AvgScatterAC.set_ylim(bottom=10**-2, top=10**6)
     im6 = AvgScatterAC.scatter(radius, AC_pows, marker=',', lw=0, alpha=0.3, color='red', s=1)
 
-    fig1.suptitle('{} IC348 epoch'.format(date))
+    fig1.suptitle('{} OMC23 epoch'.format(date))
 
     # plt.show()
-    fig1.savefig('/home/broughtonco/documents/nrc/data/IC348/IC348_plots/epochs/{}'.format(date))
+    fig1.savefig('/home/broughtonco/documents/nrc/data/OMC23/OMC23_plots/epochs/{}'.format(date))
 
 Radius_Data = radius
 
@@ -189,7 +197,7 @@ for ACDatSet, PSDDatSet in zip(DataSetsAC, DataSetsPSD):
     NEW_AC_DATA.append(np.array(ACd))
     NEW_PSD_DATA.append(np.array(PSDd))
 radius = r
-np.save('/home/broughtonco/documents/nrc/data/IC348/Datafiles/IC348_PSD.npy', np.array(NEW_PSD_DATA))
-np.save('/home/broughtonco/documents/nrc/data/IC348/Datafiles/IC348_AC.npy', np.array(NEW_AC_DATA))
+np.save('/home/broughtonco/documents/nrc/data/OMC23/Datafiles/OMC23_PSD.npy', np.array(NEW_PSD_DATA))
+np.save('/home/broughtonco/documents/nrc/data/OMC23/Datafiles/OMC23_AC.npy', np.array(NEW_AC_DATA))
 # noinspection PyUnboundLocalVariable
-np.save('/home/broughtonco/documents/nrc/data/IC348/Datafiles/IC348_radius.npy', np.array(radius))
+np.save('/home/broughtonco/documents/nrc/data/OMC23/Datafiles/OMC23_radius.npy', np.array(radius))
