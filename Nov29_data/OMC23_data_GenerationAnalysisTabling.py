@@ -30,10 +30,10 @@ def correlate(epoch_1=None, epoch_2=None, clipped_side=400, clip_only=False, psd
     """
     :param epoch_1:
         2-Dimensional numpy array. Default: None
-        When only epoch-1 is passed it is auto correlated with itself
+        When only epoch_1 is passed it is auto correlated with itself
     :param epoch_2:
         2-Dimensional numpy array. Default: None
-        When both epoch_1 and epoch-2 are passed the two arrays are cross correlated
+        When both epoch_1 and epoch_2 are passed the two arrays are cross correlated
     :param clipped_side:
         Integer. Default: 400.
         The length of one side of the clipped array.
@@ -108,11 +108,14 @@ files = os.listdir(root)  # listing all the files in root.
 FirstEpoch = fits.open('/home/broughtonco/documents/nrc/data/OMC23/OMC23_20151226_00036_850_EA3_cal.fit')
 FirstEpochDate = FirstEpoch[0].header['UTDATE']  # Date of the first epoch
 FirstEpochData = FirstEpoch[0].data[0]  # Numpy data array for the first epoch
-FirstEpochCentre = (FirstEpoch[0].header['CRPIX1'], FirstEpoch[0].header['CRPIX2'])  # central position of first epoch
+FirstEpochCentre = np.array([FirstEpoch[0].header['CRPIX1'], FirstEpoch[0].header['CRPIX2']])  # loc of actual centre
 
 # middle of the map of the first epoch
 FED_MidMapX = FirstEpochData.shape[1] // 2
 FED_MidMapY = FirstEpochData.shape[0] // 2
+FirstEpochVec = np.array([FirstEpochCentre[0] - FED_MidMapX,
+                          FirstEpochCentre[1] - FED_MidMapY]
+                         )
 
 # clipping the map to the correct (400,400) size
 FirstEpochData = FirstEpochData[FED_MidMapY-length:FED_MidMapY+length, FED_MidMapX-length:FED_MidMapX+length]
@@ -130,12 +133,15 @@ for fn in files:  # for file_name in files
         date = hdul[0].header['UTDATE']  # extracting the date from the header
         Region_Name = hdul[0].header['OBJECT']  # what we are looking at
         centre = (hdul[0].header['CRPIX1'], hdul[0].header['CRPIX2'])  # what does JCMT say the centre of the map is
-        dictionary1[date] = hdul[0], centre  # a nice compact way to store the data for later.
+        Vec = np.array([centre[0] - (hdul[0].shape[2] // 2),
+                        centre[1] - (hdul[0].shape[1] // 2)]
+                       )
+        dictionary1[date] = hdul[0], Vec  # a nice compact way to store the data for later.
 
-for date, (hdu, centre) in sorted(dictionary1.items(), key=op.itemgetter(0)):  # pulling data from dictionary
+for date, (hdu, Vec) in sorted(dictionary1.items(), key=op.itemgetter(0)):  # pulling data from dictionary
     Map_of_Region = hdu.data[0]  # map of the region
     Region_Name = hdu.header['OBJECT']  # object in map from fits header
-    JCMT_offset = (FirstEpochCentre[0] - centre[0], FirstEpochCentre[1] - centre[1])  # JCMT offset from headers
+    JCMT_offset = FirstEpochVec - Vec  # JCMT offset from headers
     JCMT_offsets.append(JCMT_offset)  # used for accessing data later.
 
     Map_of_Region = correlate(Map_of_Region, clip_only=True)  # using correlate function to clip the map (defined above)
@@ -146,7 +152,7 @@ for date, (hdu, centre) in sorted(dictionary1.items(), key=op.itemgetter(0)):  #
     XC_epochs.append(XCorr)  # appending to list; used for fitting all maps later
 
     Clipped_Map_of_Region_LENGTH = np.arange(0, Map_of_Region.shape[0])
-    loc = list(product(Clipped_Map_of_Region_LENGTH, Clipped_Map_of_Region_LENGTH)) # all index's of array
+    loc = list(product(Clipped_Map_of_Region_LENGTH, Clipped_Map_of_Region_LENGTH))  # all index's of array
 
     MidMapX = AC.shape[1] // 2  # middle of the map x
     MidMapY = AC.shape[0] // 2  # and y
