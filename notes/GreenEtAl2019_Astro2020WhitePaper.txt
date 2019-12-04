@@ -1,0 +1,8 @@
+# +=========================================================================================+
+# + https://baas.aas.org/wp-content/uploads/2019/05/372_green.pdf                           +
+# + Green, J; Megeath, T; Johnstone, D; Tobin, J; et. al.                                   +
+# + Variability int he Assembly of Protostellar Systems                                     +
+# +=========================================================================================+
+
+- Dust Extinction causes peak emission to fall in the far-IR
+- 
