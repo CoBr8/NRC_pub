@@ -51,15 +51,15 @@ def correlate(epoch_1=None, epoch_2=None, clipped_side=400, clip_only=False, psd
     if clip_only:
         mid_map_x, mid_map_y = epoch_1.shape[1] // 2, epoch_1.shape[0] // 2
         clipped_epoch = epoch_1[mid_map_y - clipped_side // 2:mid_map_y + clipped_side // 2,
-                        mid_map_x - clipped_side // 2:mid_map_x + clipped_side // 2
-                        ]
+                                mid_map_x - clipped_side // 2:mid_map_x + clipped_side // 2
+                                ]
         return clipped_epoch
 
     elif psd:
         mid_map_x, mid_map_y = epoch_1.shape[1] // 2, epoch_1.shape[0] // 2
         clipped_epoch = epoch_1[mid_map_y - clipped_side // 2:mid_map_y + clipped_side // 2,
-                        mid_map_x - clipped_side // 2:mid_map_x + clipped_side // 2
-                        ]
+                                mid_map_x - clipped_side // 2:mid_map_x + clipped_side // 2
+                                ]
         psd = fft2(clipped_epoch) * fft2(clipped_epoch).conj()
         return fftshift(psd)
 
@@ -69,8 +69,8 @@ def correlate(epoch_1=None, epoch_2=None, clipped_side=400, clip_only=False, psd
     elif epoch_2 is None:
         mid_map_x, mid_map_y = epoch_1.shape[1] // 2, epoch_1.shape[0] // 2
         clipped_epoch = epoch_1[mid_map_y - clipped_side // 2:mid_map_y + clipped_side // 2,
-                        mid_map_x - clipped_side // 2:mid_map_x + clipped_side // 2
-                        ]
+                                mid_map_x - clipped_side // 2:mid_map_x + clipped_side // 2
+                                ]
         ac = ifft2(fft2(clipped_epoch) * fft2(clipped_epoch).conj())
         return fftshift(ac)
 
@@ -78,11 +78,11 @@ def correlate(epoch_1=None, epoch_2=None, clipped_side=400, clip_only=False, psd
         mid_map_x_1, mid_map_y_1 = epoch_1.shape[1] // 2, epoch_1.shape[0] // 2
         mid_map_x_2, mid_map_y_2 = epoch_2.shape[1] // 2, epoch_2.shape[0] // 2
         clipped_epoch_1 = epoch_1[mid_map_y_1 - clipped_side // 2:mid_map_y_1 + clipped_side // 2,
-                          mid_map_x_1 - clipped_side // 2:mid_map_x_1 + clipped_side // 2
-                          ]
+                                  mid_map_x_1 - clipped_side // 2:mid_map_x_1 + clipped_side // 2
+                                  ]
         clipped_epoch_2 = epoch_2[mid_map_y_2 - clipped_side // 2:mid_map_y_2 + clipped_side // 2,
-                          mid_map_x_2 - clipped_side // 2:mid_map_x_2 + clipped_side // 2
-                          ]
+                                  mid_map_x_2 - clipped_side // 2:mid_map_x_2 + clipped_side // 2
+                                  ]
         xcorr = ifft2(fft2(clipped_epoch_1) * fft2(clipped_epoch_2).conj())
         return fftshift(xcorr)
 
@@ -191,9 +191,11 @@ for date, (hdu, Vec) in sorted(dictionary1.items(), key=op.itemgetter(0)):  # pu
 xc_offsets = []
 xc_offsets_errs = []
 
+
 def tie(models):
     m = models.x_stddev
     return m
+
 
 for XCorr in XC_epochs:
     Y_centre, X_centre = XCorr.shape[0] // 2, XCorr.shape[1] // 2  # centre of the xcorr maps default: (200,200)
@@ -216,7 +218,7 @@ for XCorr in XC_epochs:
         amplitude=XCorr.max(),
         x_mean=np.where(XCorr == XCorr.max())[1],  # location to start fitting gaussian
         y_mean=np.where(XCorr == XCorr.max())[0],  # location to start fitting gaussian
-        tied={'y_stddev':tie},
+        tied={'y_stddev': tie},
         bounds={
             'amplitude': (XCorr.max() * 0.90, XCorr.max() * 1.10),
             },  # allowing var in amplitude to better fit gauss
@@ -231,12 +233,14 @@ for XCorr in XC_epochs:
     X_max += best_fit_gauss.x_mean.value  # and y.
 
     xc_offsets.append((X_centre - X_max, Y_centre - Y_max)) # cross-corr offset calc
+    # noinspection PyBroadException
     try:
         xc_offsets_errs.append((np.sqrt(np.diag(fitting_gauss.fit_info['param_cov'])[1]),
                                 np.sqrt(np.diag(fitting_gauss.fit_info['param_cov'])[2]))
-                              )
+                               )
     except:
         xc_offsets_errs.append((-5000, -5000))
+
 Radius_Data = radius
 
 """
