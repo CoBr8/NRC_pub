@@ -240,28 +240,37 @@ for date, (hdu, Vec) in sorted(dictionary1.items(), key=op.itemgetter(0)):  # pu
 
     fig1.suptitle('{} OMC23 epoch'.format(date))
     fig1.savefig('/home/broughtonco/documents/nrc/data/OMC23/OMC23_plots/epochs/{}'.format(date))
-    # # plt.show()
+    # # # plt.show()
 
 # Gaussian fitting and offset calculations from cross correlation
 xc_offsets = []
+xc_offsets_errs = []
 for XCorr in XC_epochs:
     Y_centre, X_centre = XCorr.shape[0] // 2, XCorr.shape[1] // 2  # centre of the xcorr maps default: (200,200)
+
     # figuring out where i need to clip to
     Y_max, X_max = np.where(XCorr == XCorr.max())
     Y_max = int(Y_max)
     X_max = int(X_max)
+
     # clipping map further to better fit a gaussian profile to it
-    XCorr = XCorr[Y_max - 15:Y_max + 15, X_max - 15:X_max + 15]
+    XCorr = XCorr[Y_max - 11:Y_max + 12, X_max - 11:X_max + 12]
     # subtracting half the side to then add the mean values after
     X_max -= XCorr.shape[1] // 2
     Y_max -= XCorr.shape[0] // 2
     # generating the gaussian to fit.
+
     x_mesh, y_mesh = np.meshgrid(np.arange(XCorr.shape[0]), np.arange(XCorr.shape[1]))
     gauss_init = Gaussian2D(
+        amplitude=XCorr.max(),
         x_mean=np.where(XCorr == XCorr.max())[1],  # location to start fitting gaussian
         y_mean=np.where(XCorr == XCorr.max())[0],  # location to start fitting gaussian
         fixed={},  # any fixed parameters
-        bounds={'amplitude': (XCorr.max() * 0.90, XCorr.max() * 1.10)},  # allowing var in amplitude to better fit gauss
+        bounds={
+            'amplitude': (XCorr.max() * 0.90, XCorr.max() * 1.10),
+            # 'x_mean': (int(np.where(XCorr == XCorr.max())[1]) - 1, int(np.where(XCorr == XCorr.max())[1]) + 1),
+            # 'y_mean': (int(np.where(XCorr == XCorr.max())[0]) - 1, int(np.where(XCorr == XCorr.max())[0]) + 1)
+            },  # allowing var in amplitude to better fit gauss
     )
     fitting_gauss = LevMarLSQFitter()  # Fitting method; Levenberg-Marquardt Least Squares algorithm
     best_fit_gauss = fitting_gauss(gauss_init, x_mesh, y_mesh, XCorr)  # The best fit for the map
@@ -271,6 +280,14 @@ for XCorr in XC_epochs:
     X_max += best_fit_gauss.x_mean.value  # and y.
 
     xc_offsets.append((X_centre - X_max, Y_centre - Y_max))  # cross-corr offset calc
+
+    xc_offsets_errs.append(
+        (
+            np.sqrt(np.diag(fitting_gauss.fit_info['param_cov'])[1]),
+            np.sqrt(np.diag(fitting_gauss.fit_info['param_cov'])[2])
+        )
+    )  # error in calculations
+
 
 Radius_Data = radius
 
@@ -302,7 +319,9 @@ BaseDate = MetaData[0][2][1:]  # the base epoch date
 Date = MetaData[Epoch - 1][2][1:]  # the used epoch date
 
 hdr = 'Epoch Name JD Elevation T225 RMS Steve_offset_x Steve_offset_y Cal_f Cal_f_err ' \
-      'BA BA_err MA MA_err Covariance_div JCMT_Offset_x JCMT_offset_y XCorr_offset_x XCorr_offset_y BD BD_err MD MD_err'
+      'BA BA_err MA MA_err Covariance_div ' \
+      'JCMT_Offset_x JCMT_offset_y XCorr_offset_x XCorr_Offset_x_err XCorr_offset_y XCorr_Offset_y_err ' \
+      'BD BD_err MD MD_err'
 # header for my table files
 li = np.zeros(len(hdr.split()))  # How many columns are in the header above?
 
@@ -366,8 +385,7 @@ AC_DIV.set_xlabel('$r^2$ from centre')
 AC_DIV.set_ylabel('Similarity in AC')
 
 fig.savefig('/home/broughtonco/documents/nrc/data/OMC23/OMC23_plots/OMC23_linearFit_radius_{}.png'.format(dist))
-# plt.show()
-
+# # plt.show()
 for epoch in range(len(AC_Data)):
     e_num = MetaData[epoch][0]  # epoch number
     name = MetaData[epoch][1]  # name of epoch
@@ -380,6 +398,9 @@ for epoch in range(len(AC_Data)):
     cal_f_err = MetaData[epoch][11]  # error in calibration factor from Steve
     jcmt_offset = JCMT_offsets[epoch]  # the Offset as determined by the centre position of the maps
     xc_offset = xc_offsets[epoch]  # the offset as calculated through gaussian fitting
+    xc_offset_err = xc_offsets_errs[epoch]
+
+    # print(type(xc_offset_err), xc_offset_err)
 
     BA = Dat_dict[5][0][epoch][1]
     BA_err = Dat_dict[5][1][epoch][1]
@@ -396,34 +417,13 @@ for epoch in range(len(AC_Data)):
     # 'Epoch Name JD Elevation T225 RMS Steve_offset_x Steve_offset_y Cal_f Cal_f_err' \
     # 'BA BA_err MA MA_err JCMT_Offset_x JCMT_offset_y XCorr_offset_x XCorr_offset_y BD BD_err MD MD_err'
     dat = np.array([e_num, name, jd, elev, t225, rms, *steve_offset, cal_f, cal_f_err,
-                    BA, BA_err, MA, MA_err, covariance, *jcmt_offset, xc_offset[0][0], xc_offset[1][0], BD, BD_err, MD,
-                    MD_err]
+                    BA, BA_err, MA, MA_err, covariance,
+                    *jcmt_offset,
+                    xc_offset[0][0], xc_offset_err[0],
+                    xc_offset[1][0], xc_offset_err[1],
+                    BD, BD_err, MD, MD_err]
                    )  # the values for each epoch
-    li = np.vstack((li, dat))  # appending the values to the bottom of the array iteratively.
-
-# frmt = '% 3d ' \
-#        '% s ' \
-#        '% 14f ' \
-#        '% 4d ' \
-#        '% 5f ' \
-#        '% 8f ' \
-#        '% 8f ' \
-#        '% 8f ' \
-#        '% 8f ' \
-#        '% 8f ' \
-#        '% 8f' \
-#        '% 8f' \
-#        '% 8f' \
-#        '% 8f' \
-#        '% 8.5f' \
-#        '% 3d ' \
-#        '% 3d ' \
-#        '% 8f ' \
-#        '% 8f ' \
-#        '% 8f ' \
-#        '% 8f ' \
-#        '% 8f ' \
-#        '% 8f '
+    li = np.vstack((li, dat))
 
 form = '%s'
 
@@ -433,9 +433,3 @@ np.savetxt('/home/broughtonco/documents/nrc/data/OMC23/Datafiles/OMC23_TABLE_TOP
            fmt=form,
            header=hdr
            )
-
-# np.savetxt('/home/broughtonco/documents/nrc/data/OMC23/Datafiles/OMC23_TABLE_READABLE.table',
-#            li[1:],
-#            fmt=frmt,
-#            header=hdr
-#            )
