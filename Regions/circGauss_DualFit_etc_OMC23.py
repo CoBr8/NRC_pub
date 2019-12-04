@@ -104,7 +104,7 @@ def f2(x, m, b):
     :param x: independent variable
     :param m: slope
     :param b: intercept
-    :return: a straight line
+    :return: a parabolic line
     """
 
     y = m * x**2 + b
