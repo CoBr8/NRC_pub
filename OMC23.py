@@ -379,7 +379,7 @@ for epoch in range(len(AC_Data)):
     AC_sig_x = AC_fit_li[epoch][1][0]
     AC_sig_x_err = AC_fit_li[epoch][1][1]
     AC_sig_y = AC_fit_li[epoch][2][0]
-    AC_sig_y_err = AC_fit_li[epoch][2][0]
+    AC_sig_y_err = AC_fit_li[epoch][2][1]
 
     # dictionary[key][fit (0) or err (1)][epoch number][m (0) or b (1)]
     BA = Dat_dict[5][0][epoch][1]
