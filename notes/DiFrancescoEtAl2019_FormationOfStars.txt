@@ -1,0 +1,7 @@
+# +=========================================================================================+
+# + https://arxiv.org/pdf/1911.01989.pdf                                                    +
+# + Di Francesco, J; Kirk, H; Johnstone, D; Pudritz, R; et. al.                             +
+# + The Formation of Stars - From Filaments to Cores to Protostars and Protoplanetary Disks +
+# +=========================================================================================+
+
+- 
