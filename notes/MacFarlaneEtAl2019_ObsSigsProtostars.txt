@@ -1,0 +1,20 @@
+# +=========================================================================================+
+# + https://ui.adsabs.harvard.edu/abs/2019MNRAS.487.5106M/abstract                          +
+# + MacFarlane, B; Stamatellos, D; Johnstone, D; Herczeg, G; et. al.                        +
+# + Observational Signatures of Outbursting Protostars - I: from HD Sim. to Obs.            +
+# +=========================================================================================+
+
+- Magnitude of flux rations higher in the simulations than with EC53: 
+	- 1.5 observed, 550 simulated
+- orientation wrt observation changes observable flux:
+	- looking at the disk face on -> higher observed flux
+	- looking at the disk edge on -> lower observed flux
+
+Q?: Reaborbption of photons by the disk? 
+
+- SUb-mm to bolometric luminsoity comparison can cause issues with luminous FUor's
+	- Heating from the ISRF has little signifigance on bolometric values
+
+- FU-Ori are rare events.
+
+- 
