@@ -1,10 +1,13 @@
 # NRC_pub
-### Regions:
->IC348
->OMC23
->OPH_CORE
->SERPENS_MAIN
-### Notes:
-Brief notes on each paper we've been reading.
-### py_files
-Python files for different programs
+## FullNRCDir
+* Data
+  All of the generated data for the 8 regions studied
+* Functions
+  A seperate file for each function created for the work term
+* notes
+  notes on the different papers read on the work term
+* presentation
+  files used for the presentation
+* py_files
+  python files for data generation, analysis, fitting, etc.
+

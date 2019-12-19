@@ -1,0 +1,108 @@
+Notes on autocorrelation esp. with Python3
+==========================================
+
+Autocorrelation functions:
+	-Taking a signal input and comparing itself with a time delayed (time lag) version of itself to compare signal changes.
+		-Useful when trying to find and remove noise and other auxilliary or uninteresting signals
+		-Need to be careful however, a too aggressive of a autocorrelation function and it can remove some structure.
+		 Such as point source objects in the JCMT survey
+	-Can be used to determine the period of an oscillating signal.
+		-Such is useful when trying to find variable stars, in our case we will be using the data to find variable protostars
+
+ACF's in Python:
+
+	A function from scipy's signal module:
+	--------------------------------------
+		code//
+		from scipy import signal # ensure scipy is installed `pip install scipy`
+		cor = signal.correlate2d (im1, im2) # im1, im2 are the two images you are trying to correlate.
+		\\code
+
+		Scipy's correlate2d could be useful to check for correlation and then pointing to the next position of that occourance. Would need to write code to automate the correlation of the data points.
+
+	statsmodels has a plot_acf function. ( statsmodels.graphics.tsaplots.plotacf() ) which could prove useful, ittakes in a pandas dataframe(?) object and plots the correlation vs lagtime bar graph.
+
+	Pandas and statsmodels code for autocorrelation:
+	------------------------------------------------
+		code//
+		import matplotlib.pyplot as plt
+		from pandas import read_csv
+		from statsmodels.graphics.tsaplots import plot_acf
+		series=read_csv('/home/cobr/Documents/co-op/NRC/py_files/daily-min-temperatures.csv', header=0, index_col=0)
+		plot_acf(series)
+		plt.show()
+		\\code
+
+
+	Searching the web gives the same results from doc pages and stackexchange. The packages Numpy, Matplotlib, Numpy, Pandas, Scipy, and Statsmodels all see to have a correlate and in some cases and autocorrelate function.
+
+	Need to investigate more into each of these methods to see how they could be applied to the data we will be looking at. The two code blocks above are located in the py_files directory in the NRC folder. They give a bit of insight but some altering to the methods are needed to fit our data set.
+
+Next step is to find out how to apply an autocorrelation to the data set to get a better calibration.
+
+
+2019/09/10
+==========
+Via: https://stats.stackexchange.com/questions/77248/what-is-autocorrelation-function
+Auto-correlation functions (ACF):
+	take use of the fact that a time series data set is ordered. It finds the correlation between two different data points separated by a time lag.
+
+	A functional notation for an ACF would be as follows:
+
+		ACF(dat, n) = Correlation
+		-------------------------
+			ACF(), is the auto-correlation function
+			dat, is the ordered data set
+			n, the time period between points or, use every n'th data point
+
+	examples:
+	---------
+		ACF(dat, 1) = 0.9;
+			This determines that the correlation of a point x and a point x+1 (the next point in the time series) has a 90% correlation (0.9 in %'ile is 90%)
+		ACF(dat,5) = 0.5;
+			Again the ACF determines that the correlation of a point x and a point x+5 is about 50%.
+
+? Box-Jenkins/ARIMA model to determine how past and future data points are related in a time series.
+
+The "Partial Auto Correlation Function" (PACF):
+ 	Does the same as the ACF but it removes the intervening correlations between data points.
+
+	An example:
+	-----------
+	T1 -> T2 -> T3
+	->, signifies a corelation
+	Ti, signifies a data point
+
+	In this example T1 correlates with T2 and T2 with T3. With just the ACF, T1 can seem to correlate with T3 since it correlates to T2 which does correlate to T1. The PACF removes the intervening correlation with T2. This allows a better representation as to whether or not T1 and T3 correlate or if it only correlates because of T2.
+2019/09/13
+==========
+tried using scipy.signal.correlae2d on the data from SerpensMain_20170724_850_IR4_ext_HK, it did not like that. Very slow. Scipy documents suggest using scipy.signal.fftconvolve as it uses fast fourier transforms. Reasonable method? Will talk to Doug on Tuesday when he is in.
+
+
+
+2019/09/16, Week 3
+==========
+-Created a series of single pixel 10x10 images and a larger 100x100 Gaussian dot images.
+	->Correlated using SciPy.signal.correlate2d to determine the outcome of correlating two moving points (single pixel) and with one moving Gaussian dot and one stationary Gaussian dot.
+	->The maximum intensity is the product of the maximum intensities of the two signals.
+	-> The pixel and dot moves with respect to a certain quantity of the two items being correlated.
+	Investigate: The Location of the correlated pixel represents some form of the vector the second input needs to move to get a better correlation.
+-Plots 2 and 3 in each set now contain arrows representing the same thing.
+	-In plot two the arrow starts at the source and it points to the location of the source in plot 1.
+	-In plot three the arrow starts at the correlation point and it points to the center of the plot.
+	-Both arrows are representing he displacement of source two from source one. In plot 2, it merely shows where the second source must move to gain true correlation. In plot 3, however, the arrow represents the displacement of source 2 from source 1.
+-Image files are stored as:
+ 		{P,G}C_{Same,Diff}Pow_{Same,Diff,Diff_S2}Pos_{1,...,25}.png
+		P: Pixel Correlation
+		G: Gaussian Correlation
+		SamePow: The two sources have identical power level
+		DiffPow: The sources have different powers (random)
+		SamePos: Sources have the same position (and different powers)
+		DiffPos: The two sources are both moving
+		DiffPosS2: Source one is stationary and source two is moving.
+~Gaussian Data:
+	-DiffPow_SamePos:
+		-with r=0.05 in the multivariate_normal as the base case we have a peak of 3.16 units located roughly in the center of the gaussian.
+		-With a distributed gaussian ranging from r=0.01 to r=1 (spaced linearly with 25 values) we get a peak value going from 15.89 to 0.21 units respectively.
+		-the correlated values will be put into a table
+-

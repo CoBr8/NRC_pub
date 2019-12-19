@@ -1,0 +1,179 @@
+
+***************************************************
+***First two weeks at the DAO A Series of Notes.***
+***************************************************
+  JCMT Transient Survey:
+  ======================
+    -John Clerk Maxwell Telescope on Mauna Kea Hawaii, surveyed for about 3.5 years to collect sub-millimeter data on star forming regions.
+    -Most sources did not have a rapidly changing luminance flux.
+    -Five proto-stellar sources had a emission greater than the mean flux for the object.
+    -The disks are believed to have grown early on in the life cycle.
+    -The disk channels accretion onto the proto-star.
+    -Growth from the envelope is steady but the disk accretion is believed to be variable because of instabilities that grow quickly.
+    -Instabilities produce macroscopic structures detectable early on.
+    -Inner disks resolution insufficient to determine structure.
+    -Classification of instabilities could be possible by monitoring accretion from disk onto the proto-star.
+    -Small flickers in observations suggest non-steady star accretion
+    -Bursts of accretion (EXors) specifically the largest of those bursts (FUors) are caused by a increase of accretion rate of about 10^4
+    -Proto-stars are obscured by an envelope of dust, making direct observation of accretion difficult.
+    -Instead of observing variable accretion mass Johnstone et al suggested looking at accretion luminosity.
+      -Accretion luminosity should leave a signature on the envelope.
+    -Only relevant time delay was the light-crossing delay, the time it took the light to cross the dust envelope.
+    -Five robust sources of variability were found plus an extra potential candidate.
+    -Few proto-stars vary with large amplitudes (10%) in sub-mm continuums over the timescale of a year. 10% of these protostars vary by ~5% over a year.
+
+    ******************************************************************************
+    -Perhaps more interesting are the possible additional periodic variables within the present data set with low amplitudes below our present detection limit, which will require time-domain Fourier analyses to uncover.
+    -For such sources, a greater number of epochs and a larger time range to compare against will be extremely beneficial.
+    ******************************************************************************
+
+    -low-mass stars form from the collapse of the protoplanetary envelopes surrounding the stars as well as accretion from the disks surrounding them.
+    -The luminosities of the protostars are below what is expected through steady accretion from the disk.
+    -Strong, but indirect, evidence shows the accretion rate is disturbed by short bursts of rapid accretion. (Episodic Accretion)
+    -Using optical photometry the accretion burts are detected only on optically bright protostars, typically those which are young objects. This biases the variability to be at or near the end of the main phase growth.
+    -Few outburts have been observed on deeply embedded class 0 stars.
+
+    JCMT Observing Strategy:
+    ------------------------
+      -SCUBA-2:
+        -10,000 pixel bolometer camera. images in both 450 and 850um.
+      -Regions are scanned in a pong pattern
+      -Regions are scanned roughly every month to account for the emission from the protostar, the absorption from the dust, and the reemission from the dust envelope.
+
+    Calibration
+    -----------
+
+      Method for data reduction:
+      	1. MAKEMAP in SMURF in STARLINK software
+      		a. Starts by taking in the raw power data from the telescope and then iteratively removes noise until a suitable model is left.
+      	2. Common mode noise is removed via the program. Largely due to atmospheric emissions.
+      		a. THIS REMOVES EXTENDED FAINT STRUCTURE IN FINAL MAPS.
+      	3. An atmosperic extinction model is then applied to the map to remove any Precipitable water vapour (PWV). A Low frequency pass is applied to remove any missed noise from the common mode noise removal.
+      	4. The astronomical signal is then estimated and the residual white noise is compared to the previous iteration.
+      		a. The solution converges when the difference in pixels is below a certain threshold
+      	5(Opt.). The user can provide a mask to focus on significant objects.
+
+      Goal of the Calibration was to extract robust non-varying sources from SCUBA-2 and apply the two maps (spatial alighment and flux calibration methods)
+      	-Excluded sources which did not meet criteria (anything less than 500mJy/beam would put calibration at >2% as noise is around 10mJy/beam)
+
+      Two ways of attacking the uncertainty of the maps:
+      	1. Modulate astro signals in such a way that they appear in the lowest noise regions (in person with the bolometer array)
+      	2. Provide good "cross-linking". A method of scanning at a range of position angles.
+
+    Data Noise reduction methods:
+    -----------------------------
+    	1. Time series downsampling and map pixel size
+    	2. Time-domain despiking
+    	3. Step correction
+    	4. Gap filling/Apodization
+    	5. Bolometer Filtering
+    	6. Additional Data rejection
+
+    Data reduction process (preprocessing):
+    ---------------------------------------
+      -Raw data is assembled into continuous time series (TS)
+      -A flat field correction is then applied
+      -Data is down-sampled and discontinuities (spikes, steps, gaps) are repaired
+      -The mean of each bolometer TS is removed
+        1. Common Mode and gain offset models:
+          -Estimates the COM signal from each bolometer at each time step
+        2. EXT model corrects for extinction
+        3. Fourier Transform Filter
+          -Removes independent low-frequency noise associated to each bolometer
+          -Scale which is filtered is inputted as a length, this is calculated from the speed the telescope is scanning (a known quantity)
+        4. AST model
+          -Removes significant astronomical signal
+          -After removal of significant astronomical signals left with a "noise map"
+        5. NOI model measures residual noise.
+
+      If the data converges the map is made, however if it does not converge then the previous solution is inverted and the process starts again at step 1. This continues until a solution converges and then a map is then produced.
+
+    JCMY LR1 Reduction Method:
+    --------------------------
+      The parameters for the JCMT LR1 makemap are located in a file called "dimmconfig_jsa_generic.lis". These parameters are focused on minimizing artificial emission being created during the reduction process. no large scale recovery would be attempted when using this method however.
+
+      Most import params for the makemap are as follows:
+        com.perarray = 1
+          Creates a common mode for each array, removes any sources larger than 200 arcseconds.
+        flt.filt_edge_largescale = 200
+          Filters all sources larger than 200 arcseconds, consistent with com.perarray above. Converts timescale to length scale through scanning speed data.
+        numiter = -25 & ast.skip = 5
+          25 iterations are performed, the first five of which do not implement the AST model. If 25 iterations are reached without convergence then the process stops.
+        ast.zero_snr = 5
+          requires a minimum of 5\sigma_rms for a source to be an astronomical source.
+        ast.zero_snrlo = 3
+          Identified sources (of at least 5\sigma_rms) to expand in area until the flux density values are 3\sigma_rms
+        maptol = 0.01
+          Termination tolerance. As soon as the mean pixel delta hits 1% of the estimated map RMS, the map making iteration terminates.
+
+  Notes on autocorrelation esp. with Python3
+  ==========================================
+    Auto-correlation functions (ACF):
+    ---------------------------------
+      take use of the fact that a time series data set is ordered. It finds the correlation between two different data points separated by a time lag.
+
+      A functional notation for an ACF would be as follows:
+      ACF(dat, n) = Correlation
+      -------------------------
+        ACF(), is the auto-correlation function
+        dat, is the ordered data set
+        n, the time period between points or, use every n'th data point
+
+      examples:
+      ---------
+        ACF(dat, 1) = 0.9;
+        This determines that the correlation of a point x and a point x+1 (the next point in the time series) has a 90% correlation (0.9 in %'ile is 90%)
+        ACF(dat,5) = 0.5;
+        Again the ACF determines that the correlation of a point x and a point x+5 is about 50%.
+
+    Autocorrelation functions:
+    --------------------------
+      -Taking a signal input and comparing itself with a time delayed (time lag) version of itself to compare signal changes.
+      -Useful when trying to find and remove noise and other auxilliary or uninteresting signals
+      -Need to be careful however, a too aggressive of a autocorrelation function and it can remove some structure.
+      Such as point source objects in the JCMT survey
+      -Can be used to determine the period of an oscillating signal.
+      -Such is useful when trying to find variable stars, in our case we will be using the data to find variable protostars
+
+    A function from scipy's signal module:
+    --------------------------------------
+      code//
+        from scipy import signal # ensure scipy is installed `pip install scipy`
+        cor = signal.correlate2d (im1, im2) # im1, im2 are the two images you are trying to correlate.
+        \\code
+
+      Scipy's correlate2d could be useful to check for correlation and then pointing to the next position of that occourance. Would need to write code to automate the correlation of the data points.
+
+    Pandas and statsmodels code for autocorrelation:
+    ------------------------------------------------
+      statsmodels has a plot_acf function. ( statsmodels.graphics.tsaplots.plotacf() ) which could prove useful, it takes in a pandas dataframe(?) object and plots the correlation vs lag time bar graph.
+
+
+      code//
+        import matplotlib.pyplot as plt
+        from pandas import read_csv
+        from statsmodels.graphics.tsaplots import plot_acf
+        series=read_csv('/home/cobr/Documents/co-op/NRC/py_files/daily-min-temperatures.csv', header=0, index_col=0)
+        plot_acf(series)
+        plt.show()
+      \\code
+
+    The "Partial Auto Correlation Function" (PACF):
+    -----------------------------------------------
+      Does the same as the ACF but it removes the intervening correlations between data points.
+
+      An example:
+      -----------
+        T1 -> T2 -> T3
+        ->, signifies a corelation
+        Ti, signifies a data point
+
+      In this example T1 correlates with T2 and T2 with T3. With just the ACF, T1 can seem to correlate with T3 since it correlates to T2 which does correlate to T1. The PACF removes the intervening correlation with T2. This allows a better representation as to whether or not T1 and T3 correlate or if it only correlates because of T2.
+
+    Searching the web gives the same results from doc pages and stackexchange. The packages Numpy, Matplotlib, Numpy, Pandas, Scipy, and Statsmodels all seem to have a correlate and in some cases an auto-correlate function.
+
+    Need to investigate more into each of these methods to see how they could be applied to the data we will be looking at. The two code blocks above are located in the py_files directory in the NRC folder. They give a bit of insight but some altering to the methods are needed to fit our data set.
+
+    Next step is to find out how to apply an auto-correlation to the data set to get a better calibration.
+
+    ? Box-Jenkins/ARIMA model to determine how past and future data points are related in a time series.
