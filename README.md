@@ -20,3 +20,8 @@
 * Date:
 
 The old meeting material for Doug
+
+## Regions
+* Region
+
+contained in each region are the metadata files, any generated fits images and all other files associated to the specific region.
