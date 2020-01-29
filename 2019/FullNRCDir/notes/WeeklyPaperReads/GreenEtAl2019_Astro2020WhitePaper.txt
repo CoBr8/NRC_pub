@@ -1,0 +1,30 @@
+# +=========================================================================================+
+# + https://baas.aas.org/wp-content/uploads/2019/05/372_green.pdf                           +
+# + Green, J; Megeath, T; Johnstone, D; Tobin, J; et. al.                                   +
+# + Variability in the Assembly of Protostellar Systems                                     +
+# +=========================================================================================+
+
+- Dust Extinction causes peak emission to fall in the far-IR
+
+- Mass and angular momentum transportation in disks:
+	- Viscous Torques due to turbulance caused by MRI
+	- Gravitational torques due to gravitational instability
+	- Disk Winds
+
+- Variability:
+	- alters density,
+	- temperature,
+	- chemistry in the disk
+
+- Accretion Variability should be reflected in jet variability
+
+- X-Ray diagnostics of accretion and outflow
+	- Jet rotation => prediction of magnetically driven wind models
+	- Knots in jet outflow a fossil record of episodic accretion
+
+- Multi-wavelength simultaneity
+	- YSO Outbursts (radio flares) are likely accompanied by enhanced UV/X-ray bursts 
+	- Multi-wavelength measurements can also track temperature rise from inside out
+
+- High Spectral and Spatial resolutions:
+	- Both are needed to probe Class 0 sources in optical/Mid-IR.

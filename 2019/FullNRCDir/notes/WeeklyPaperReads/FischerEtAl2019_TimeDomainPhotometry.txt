@@ -1,0 +1,12 @@
+# +=========================================================================================+
+# + https://baas.aas.org/wp-content/uploads/2019/05/495_fischer.pdf                         +
+# + Fischer, J; Dunham, M; Green, J; Hatchell, J; et. al.                                   +
+# + Time-Domain Photometry of Protostars at Far-IR and Sub-mm Wavelengths                   +
+# +=========================================================================================+
+
+- Wavelength region beyond 70um is a major contributor to luminosity.
+- Post protostellar phase, mass accretion is at most a few percent of the mass yearly.
+	- Most of the mass accretion must take place during the protostellar phase
+- Variability of the protostar is linked to the disk, and likely to the structure in outflows
+- Linking accretion in the youngest protostars to exoplanet formation.
+- 

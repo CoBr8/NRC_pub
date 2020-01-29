@@ -1,0 +1,52 @@
+# +==================================================================+
+# | https://ui.adsabs.harvard.edu/abs/2017ApJ...843...55M/abstract   |
+# | Mairs, Steve; Lane, James; Johnstone, Doug; et al.               |
+# | The JCMT Transiet Survey: Data reduction and Calibration Methods |
+# +==================================================================+
+
+
+Purpose:	To discuss the methods used in reduction and 
+		calibration of the JCMT Transient data
+
+Notes:		- MAKEMAP in SMURF in STARLINK software
+		  - Starts by taking in the raw power data from 
+		  the telescope and then iteratively removes noise 
+		  until a suitable model is left.
+		
+		- Goal of the Calibration was to extract robust non-
+		varying sources from SCUBA-2 and apply the two maps 
+		(spatial alighment and flux calibration methods)
+				
+		- Spatial Filtering at 200" and 600" recovered compact
+		structure ~ the same
+		
+		- R3 reduction deemed most suitable: 200" filter 
+		
+		Alignment:
+		- Pointing correction done by fitting the most compact
+		peak sources in the map
+		
+		- GAUSSCLUMPS was used. As it robustly characterizes 
+		gaussian structure and subtracts background structure.
+
+		- Map is smoothed with a 6" gaussian kernel to reduce
+		noise fluctuations
+		
+		- Gaussians are fitted to source > 200mJy/beam
+
+		- match the sources between the maps
+		
+		- sources that differ by 10" are dubious and not used.
+		the pointing accuract is expected to be better than
+		that.
+
+		Flux Calibrations: 
+		- Excluded sources which did not meet criteria
+                  - anything less than 500mJy/beam would put
+                  calibration at >2% as noise is around
+                  10mJy/beam
+
+		- Alignment uncertainty of ~1%
+		- Flux Uncertatinty of ~2-3% for bright sources
+		
+Q?:  CO(J = 3-2)????

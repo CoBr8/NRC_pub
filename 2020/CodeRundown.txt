@@ -1,0 +1,208 @@
+How the OMC23 Python script works:
+==================================
+lines 1-8:
+	- importing required modules for the script to run.
+lines 16-27:
+	- a 2d plot colourbar function for cleaner colourbars.
+	- NOTE: not used unless a plot is being generated.
+Lines 30-86:
+	- Correlation function
+	- contains methods for auto correlation, cross correlation, 
+	  power spectrums, and clipping
+	- Parameters are outlined in the file.
+	- clip_only:
+		- Only clips a map down to a default 400x400 map
+	- psd:
+		- calculates the power spectrum of a map
+		- the fourier transform of an auto correlation map
+	- Error catch, will raise an error if nothing is passed to 
+	  the function. 
+	- elif epoch_2 is none: 
+		- calculates the auto correlation by clipping 
+		  the map and:
+		  AC =  IFFT(FFT(A)*FFT(A))
+	- else:
+		- calculates the cross correlation by clipping
+		  the map and:
+		  XC = IFFT(FFT(A)*FFT(B))
+lines 89-98:
+	- linear function to fit to the "pow at a radius" plots
+
+length: a variable defn for clipping the reference map for the XC.
+root: the root directory of the data, used to find/use data files.
+files: all the files in the root directory. 
+
+first epoch: 
+	- the HDUL list, the date of the first epoch (used for 
+	  plotting), the data map, the centre as listed by EAO
+
+FED_MidMap{x,y}:
+	- middle of the map, ie. the pixel centre of a map based
+	  on the size of the data map. not neccissarily equal to
+	  the centre of the map.
+FirstEpochVec:
+	- the vector from the given centre of the map (From EAO)
+	  to the data maps physical centre. 
+
+FirstEpochData:
+	- The clipped (400x400) map for the first epoch, everything
+	  in the cross correlation is referenced off of this map.
+	- It is defined at the beginning of the code and not edited
+	  again. 
+
+data arrays are created to hold the data objects that are beign created in the next loop:
+
+for fn in files:
+	- this loop starts by checking to make sure the data I am
+	  looking at is only the data from CADC, ie. no txt files, 
+	  no hidden files (files with preceeding '.') etc. 
+	- open the HDU lists object and from the science HDU
+	  I extract the date, Region name, the EAO's centre, and
+	  then create a vector from the EAO's centre to the physical
+	  centre of the maps.
+	- the data and the vectors are then stored in a dictionary
+	  using the date of each observation as a key to the data
+
+for date, (hdu, vec) in ...:
+	- This loop is looking through a sorted version of the 
+	  previously created dictionary. It is sorted based on the
+	  keys of the dictionary, ie. sorted on the dates.
+	- The data, region, and JCMT offsets are created with 
+	  the JCMT offsets beign calculated and then stored for use
+	  later when generating the table.
+	- Map_of_region is clipped down using the clip_only param
+	  of my correlate function described above. 
+	- the cross correlation is calculated
+	- power spectrum is calculated (legacy, was not used)
+	- the auto correlation was calculated. 
+
+	- each map,XC,AC,PSD was stored in a list (which preserves 
+	  ordering in python) 
+	- the length of the data arrays were determined and then 
+	  used in a product function to generate all permutations
+	  of the indexable locations in the map. 
+	- Physical midpoints of the maps were determined 
+	  (MidMap{x,y}).
+	- All of the data generated from this loop is stored into a
+	  fits file.
+	for idx in loc:
+		- This loop was used to determine the power in the
+		  map at a specific radius.
+		- the radius was calculated from the distance 
+		  formula using the values from the index list and
+		  the mid map positions of (200,200)
+		- using the index positions we find the power at
+		  that position in the AC and PSD map and save it
+		  to use as the power v radius for each epoch.
+	- The lists just created are stored in a epoch ordered list
+	  which can be accessed later for plotting.
+
+for ACDatSet,PSDDatSet in zip(DatSetsAC, DatSetsPSD):
+	- 1. I've created two new lists to store my data: 
+	  (AC_DATA and PSD_DATA)
+	- 2. Zip the data together with the radius (ie make a duple 
+	  of the radius point and its corresponding data point)
+	- 3. Sort the duples based on increasing radius
+	- 4. Split the zipped data into the radius and data arrays
+	- 5. Redefine my original variables to be this sorted data.
+
+- Define some new dictionaries to use for the table for easy 
+  referencing.
+
+num: the first n data points which correspond to the the radius 
+     being less than our set value (we used 5)
+
+for i in range(len(AC_Data)):
+	- generating the pow vs r data using the older division
+	  method and the base AC maps.
+	- used scipys fitting function to fit the first n data
+	  points excluding the first data point, which corresponded
+	  to the radius being less than or equal to 5.
+		- this radius was chosen as it equates to 25 in r^2,
+		  any further than this too much of the curvature
+		  was starting to be introduced into the plot and
+		  would increase the error in the fit.
+	- saved the fits to a dictionary to be used later.
+
+Gaussian Fitting of the Cross Correlation and the Auto Correlation:
+===================================================================
+- Note:
+	- for the XC and AC clipping, we are currently clipping at
+	  a couple different values. 5,7,9, and 11. ie. a 5x5 map 
+	  to an 11x11 map. 
+	- For the reports and presentations we used values from the
+	  11x11 maps. 
+	- The ideal size could be between 11x11 and 15x15
+		- a script is being written to check this (27/01/2020)
+
+Cross correlation (XC):
+-----------------------
+
+- pull each XC out of the ordered list created earlier. 
+- find where the max pixel is using the where function of numpy
+- clipping the map into a 11x11 region to better fit the gaussian
+  to the peak.
+- subtracting half size of the map from the max position
+- using AstroPy's gaussian2d function to create a gaussian:
+	- initial values are given as:
+		amplitude: max value of XC
+		mean: middle of the map by integer dividing shape by
+		      2
+	- fixed values:
+		- no values were fixed for the XC fitting
+	- bounds:
+		- amplitude is bounded to be within 10% of max value
+- used astropy fitting package and a Levenberg Marquardt least 
+  squares algorithm to fit the gaussian. 
+- add the mean values of the gaussian to the max pointing vector to 
+  give the correct centre of the gaussian as fitted by astropy.
+- XC offsets are then calculated using vector subtraction of the
+  calculated location of the gaussian peak from the physical centre 
+  of the maps. This offset is then saved to a list which preserves 
+  the epoch ordering.
+
+
+Auto correlation (AC):
+----------------------
+
+- as with the XC the AC fits the gaussian in a similar method. 
+- we determine the B values from our previously fitted linear
+  function from the pows vs r plots. 
+- we set the central value to be the estimated B value from the
+  linear fit. 
+- We clip into n 11x11 region around the peak of the AC.
+- use AstroPy's gaussian 2d to create a gaussian:
+	initial params:
+		amplitde: max of the AC (estimated B value)
+		mean: centre of the clipped 11x11 map. 
+	fixed params:
+		no params were fixed
+	bounds:
+		no bounds were set
+- use the same Levenberg Marquardt least squares algorithm to fit
+- calculated the errors using the sqrt of the diagonal of the 
+  covariance matrix
+- appened the errors to a list to use for the table.
+
+
+!!!
+- Note: 
+	- A new method of using a masked array to fit the AC is 
+  	  being investigated.
+	- instead of setting the central pixel value to the 
+	  estimated b value, it is simply being masked from 
+	  the fitting program using numpy's "ma" module. 
+!!!
+
+
+Tabling all of the data:
+========================
+
+All of the data generated by this program was stored in either a 
+dictionary with relevant keys, or an epoch ordered list which is 
+how the table was created. 
+
+Each value was extracted from the data objects and then the table
+was generated using numpys savetxt function. This saves the table
+as an ascii table so it can be easily imported into TOPCAT and 
+analyzed.

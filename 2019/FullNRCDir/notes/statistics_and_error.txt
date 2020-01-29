@@ -1,0 +1,12 @@
+Covariance Matrix:
+------------------
+    # (Auto-co-variance matrix, dispersion matrix, variance matrix, variance-co-variance matrix)
+
+    # A matrix whose entries in the i-th and j-th position represents the variance between the i-th and j-th quantity.
+    # ie. for a 2d cartesian distribution with co-variance matrix:
+        VAR=[[  1, 2 ],
+             [ -2, 3 ]]
+            * 2 and -2 represent the co-variance between x and y and y and x respectively. 
+            * 1 is the variance in the x data and,
+            * 3 is the variance in the y data
+    # For larger NxN, N integer, the diagonal represents the variance of the quantity with itself and anywhere else off the diagonal is a co-variance relation between the quantity_i and the quantity_j.
