@@ -1,0 +1,19 @@
+The include PNG file is a TOPCAT generated plot.
+
+It shows the error of the masked data
+vs the unmasked data.
+
+relative error:
+	masked:
+		mean:	2.20
+		SD  :	0.1022
+	unmasked:
+		mean: 	1.37
+		SD  :	0.1270
+
+NOTE: the unmasked data is using the
+extrapolated b value from the linear least
+squares fit of the pow v radius plots.
+
+
+
