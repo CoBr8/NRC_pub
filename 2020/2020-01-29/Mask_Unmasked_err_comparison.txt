@@ -15,5 +15,9 @@ NOTE: the unmasked data is using the
 extrapolated b value from the linear least
 squares fit of the pow v radius plots.
 
-
+parameters:
+===========
+dist = 5px
+XC   = 11x11 map
+AC   = 11x11 map
 
