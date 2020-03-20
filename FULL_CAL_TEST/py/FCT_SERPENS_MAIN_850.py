@@ -52,15 +52,15 @@ def correlate(epoch_1=None, epoch_2=None, clipped_side=400, clip_only=False, psd
     if clip_only:
         mid_map_x, mid_map_y = epoch_1.shape[1] // 2, epoch_1.shape[0] // 2
         clipped_epoch = epoch_1[mid_map_y - clipped_side // 2:mid_map_y + clipped_side // 2 + 1,
-                                mid_map_x - clipped_side // 2:mid_map_x + clipped_side // 2 + 1
-                                ]
+                        mid_map_x - clipped_side // 2:mid_map_x + clipped_side // 2 + 1
+                        ]
         return clipped_epoch
 
     elif psd:
         mid_map_x, mid_map_y = epoch_1.shape[1] // 2, epoch_1.shape[0] // 2
         clipped_epoch = epoch_1[mid_map_y - clipped_side // 2:mid_map_y + clipped_side // 2 + 1,
-                                mid_map_x - clipped_side // 2:mid_map_x + clipped_side // 2 + 1
-                                ]
+                        mid_map_x - clipped_side // 2:mid_map_x + clipped_side // 2 + 1
+                        ]
         psd = fft2(clipped_epoch) * fft2(clipped_epoch).conj()
         return fftshift(psd)
 
@@ -70,8 +70,8 @@ def correlate(epoch_1=None, epoch_2=None, clipped_side=400, clip_only=False, psd
     elif epoch_2 is None:
         mid_map_x, mid_map_y = epoch_1.shape[1] // 2, epoch_1.shape[0] // 2
         clipped_epoch = epoch_1[mid_map_y - clipped_side // 2:mid_map_y + clipped_side // 2 + 1,
-                                mid_map_x - clipped_side // 2:mid_map_x + clipped_side // 2 + 1
-                                ]
+                        mid_map_x - clipped_side // 2:mid_map_x + clipped_side // 2 + 1
+                        ]
         ac = ifft2(fft2(clipped_epoch) * fft2(clipped_epoch).conj())
         return fftshift(ac)
 
@@ -79,11 +79,11 @@ def correlate(epoch_1=None, epoch_2=None, clipped_side=400, clip_only=False, psd
         mid_map_x_1, mid_map_y_1 = epoch_1.shape[1] // 2, epoch_1.shape[0] // 2
         mid_map_x_2, mid_map_y_2 = epoch_2.shape[1] // 2, epoch_2.shape[0] // 2
         clipped_epoch_1 = epoch_1[mid_map_y_1 - clipped_side // 2:mid_map_y_1 + clipped_side // 2 + 1,
-                                  mid_map_x_1 - clipped_side // 2:mid_map_x_1 + clipped_side // 2 + 1
-                                  ]
+                          mid_map_x_1 - clipped_side // 2:mid_map_x_1 + clipped_side // 2 + 1
+                          ]
         clipped_epoch_2 = epoch_2[mid_map_y_2 - clipped_side // 2:mid_map_y_2 + clipped_side // 2 + 1,
-                                  mid_map_x_2 - clipped_side // 2:mid_map_x_2 + clipped_side // 2 + 1
-                                  ]
+                          mid_map_x_2 - clipped_side // 2:mid_map_x_2 + clipped_side // 2 + 1
+                          ]
         xcorr = ifft2(fft2(clipped_epoch_1) * fft2(clipped_epoch_2).conj())
         return fftshift(xcorr)
 
@@ -127,7 +127,7 @@ FirstEpochData = FirstEpochData[
                  FED_MidMapX - length:FED_MidMapX + length + 1]
 
 DataSetsPSD, DataSetsAC, radiuses = [], [], []
-XC_epochs, AC_epochs = [], []
+XC_epochs, AC_epochs, epoch_Dates = [], [], []
 dictionary1 = {}
 JCMT_offsets = []
 
@@ -151,11 +151,11 @@ for date, (hdu, Vec) in sorted(dictionary1.items(), key=op.itemgetter(0)):  # pu
 
     Map_of_Region = correlate(Map_of_Region, clip_only=True)  # using correlate function to clip the map (defined above)
     XCorr = correlate(epoch_1=Map_of_Region, epoch_2=FirstEpochData).real  # cross correlation of epoch with the first
-    PSD = correlate(Map_of_Region, psd=True).real  # power spectrum of the map
     AC = correlate(Map_of_Region).real  # auto correlation of the map
 
-    AC_epochs.append(AC)
-    XC_epochs.append(XCorr)  # appending to list; used for fitting all maps later
+    AC_epochs.append([date, AC])
+    XC_epochs.append([date, XCorr])  # appending to list; used for fitting all maps later
+    epoch_Dates.append(date)
 
     Clipped_Map_of_Region_LENGTH = np.arange(0, Map_of_Region.shape[0])
     loc = list(product(Clipped_Map_of_Region_LENGTH, Clipped_Map_of_Region_LENGTH))  # all index's of array
@@ -167,22 +167,18 @@ for date, (hdu, Vec) in sorted(dictionary1.items(), key=op.itemgetter(0)):  # pu
 
     for idx in loc:  # Determining the power at a certain radius
         r = ((idx[0] - MidMapX) ** 2 + (idx[1] - MidMapY) ** 2) ** (1 / 2)
-        PSD_pow = PSD[idx[0], idx[1]].real
         AC_pow = AC[idx[0], idx[1]].real
         # +================================================================+
         radius.append(r)
-        PSD_pows.append(PSD_pow)
         AC_pows.append(AC_pow)
 
     DataSetsAC.append(np.array(AC_pows))
-    DataSetsPSD.append(np.array(PSD_pows))
-
 Radius_Data = radius
 
 # Creating the sorted data for the Power vs Radius Plots:
 
 AC_Data, PSD_Data = [], []
-for ACDatSet, PSDDatSet in zip(DataSetsAC, DataSetsPSD):
+for ACDatSet in DataSetsAC:
     r, ACd = zip(*sorted(list(zip(Radius_Data, ACDatSet)), key=op.itemgetter(0)))
     AC_Data.append(np.array(ACd))
 
@@ -205,11 +201,11 @@ for dist in [7]:
 # +============================================================+
 # | Gaussian fitting and offset calculations cross correlation |
 # +============================================================+
-xc_offsets_dict = defaultdict (list)
+xc_offsets_dict = defaultdict(list)
 AC_dat_dict = defaultdict(list)
 for width in [7]:
-    size = width*2+1
-    for XCorr in XC_epochs:
+    size = width * 2 + 1
+    for date, XCorr in XC_epochs:
         Y_centre, X_centre = XCorr.shape[0] // 2, XCorr.shape[1] // 2  # centre of the xcorr maps default: (200,200)
         # figuring out where i need to clip to
         Y_max, X_max = np.where(XCorr == XCorr.max())
@@ -233,7 +229,7 @@ for width in [7]:
                 # 'amplitude': (XCorr.max() * 0.90, XCorr.max() * 1.10),
                 'x_mean': (int(np.where(XCorr == XCorr.max())[1]) - 1, int(np.where(XCorr == XCorr.max())[1]) + 1),
                 'y_mean': (int(np.where(XCorr == XCorr.max())[0]) - 1, int(np.where(XCorr == XCorr.max())[0]) + 1)
-                },  # allowing var in amplitude to better fit gauss
+            },  # allowing var in amplitude to better fit gauss
         )
         fitting_gauss = LevMarLSQFitter()  # Fitting method; Levenberg-Marquardt Least Squares algorithm
         best_fit_gauss = fitting_gauss(gauss_init, x_mesh, y_mesh, XCorr)  # The best fit for the map
@@ -242,19 +238,19 @@ for width in [7]:
         # now we can get the location of our peak fitted gaussian and add them back to get a total offset
         Y_max += best_fit_gauss.y_mean.value  # Finding the distance from 0,0 to the centre gaussian
         X_max += best_fit_gauss.x_mean.value  # and y.
-
         try:
             err = np.sqrt(np.diag(fitting_gauss.fit_info['param_cov']))
         except:
-            err = np.ones(10) * -1
-        xc_offsets_dict[size].append([(X_centre - X_max, Y_centre - Y_max), (err[1], err[2])])
+            err = np.ones(10) * -5
+        # cross-corr offset calc
+        xc_offsets_dict[date].append([(X_centre - X_max, Y_centre - Y_max), (err[1], err[2])])
 
     # +============================================+
     # | Autocorrelation symmetric Gaussian Fitting |
     # +============================================+
 
     AC_fit_li = []
-    for AC in AC_epochs:
+    for date, AC in AC_epochs:
         # figuring out where I need to clip to, realistically, this SHOULD be at the physical centre (200,200)
         Y_max, X_max = np.where(AC == AC.max())
         Y_max, X_max = int(Y_max), int(X_max)
@@ -281,17 +277,24 @@ for width in [7]:
         try:
             err = np.sqrt(np.diag(fitting_gauss.fit_info['param_cov']))
         except:
-            err = np.ones(10) * -1
-        AC_dat_dict[size].append([(float(best_fit_gauss.amplitude.value), err[0]),
-                            (float(best_fit_gauss.x_stddev.value), err[3]),
-                            (float(best_fit_gauss.y_stddev.value), err[4]),
-                            (float(best_fit_gauss.theta.value), err[5])
-                            ])
+            err = np.ones(10) * -5
+        AC_dat_dict[date].append(
+            [
+                (float(best_fit_gauss.amplitude.value), err[0]),
+                (float(best_fit_gauss.x_stddev.value), err[3]),
+                (float(best_fit_gauss.y_stddev.value), err[4]),
+                (float(best_fit_gauss.theta.value), err[5])
+            ]
+        )
 # +=======================+
 # | generating the table: |
 # +=======================+
 # bringing in the Meta data files;
 MetaData = np.loadtxt('/home/cobr/Documents/NRC/data/SERPENS_MAIN/850/SERPENS_MAIN_850_EA3_cal_metadata.txt', dtype='str')
+meta_dates = []
+for meta in MetaData:
+    metadate = meta[1][-18:-10]
+    meta_dates.append(metadate)
 
 # header for my table files
 hdr = 'Epoch Name JD Elevation T225 RMS Steve_offset_x Steve_offset_y Cal_f Cal_f_err ' \
@@ -300,89 +303,61 @@ hdr = 'Epoch Name JD Elevation T225 RMS Steve_offset_x Steve_offset_y Cal_f Cal_
       'BA BA_err MA MA_err ' \
       'AC_amp AC_amp_err AC_sig_x AC_sig_x_err AC_sig_y AC_sig_y_err AC_theta AC_theta_err '
 
-li = np.zeros(len(hdr.split()))  # How many columns are in the header above?
+li = np.zeros(len(hdr.split()), dtype=str)  # How many columns are in the header above?
+epoch = 0
+index = 0
+for date in epoch_Dates:
+    if str(date) in meta_dates:
+        e_num = str(MetaData[epoch][0])  # epoch number
+        name = str(MetaData[epoch][1])  # name of epoch
+        jd = str(MetaData[epoch][4])  # julian date
+        elev = str(MetaData[epoch][6])  # elevation
+        t225 = str(MetaData[epoch][7])  # tau-225
+        rms = str(MetaData[epoch][8])  # RMS level
+        steve_offset_x = str(MetaData[epoch][-2])
+        steve_offset_y = str(MetaData[epoch][-1])
+        cal_f = str(MetaData[epoch][10])  # calibration factor from Steve
+        cal_f_err = str(MetaData[epoch][11])  # error in calibration factor from Steve
+        epoch += 1
+    else:
+        e_num = str(-1)
+        name = str(date)  # name of epoch
+        jd = str(-1)  # julian date
+        elev = str(-1)  # elevation
+        t225 = str(-1)  # tau-225
+        rms = str(-1)  # RMS level
+        steve_offset_x = str(-1)
+        steve_offset_y = str(-1)
+        cal_f = str(-1)  # calibration factor from Steve
+        cal_f_err = str(-1)  # error in calibration factor from Steve
 
-for epoch in range(len(AC_Data)):
-    e_num = MetaData[epoch][0]  # epoch number
-    name = MetaData[epoch][1]  # name of epoch
-    jd = MetaData[epoch][4]  # julian date
-    elev = MetaData[epoch][6]  # elevation
-    t225 = MetaData[epoch][7]  # tau-225
-    rms = MetaData[epoch][8]  # RMS level
-    steve_offset = np.array([MetaData[epoch][-2], MetaData[epoch][-1]])
-    cal_f = MetaData[epoch][10]  # calibration factor from Steve
-    cal_f_err = MetaData[epoch][11]  # error in calibration factor from Steve
-    jcmt_offset = JCMT_offsets[epoch]  # the Offset as determined by the centre position of the maps
+    jcmt_offset_x = JCMT_offsets[index][0]  # the Offset as determined by the centre position of the maps
+    jcmt_offset_y = JCMT_offsets[index][1]
+    xc_offset_x = str(xc_offsets_dict[date][0][0][0])  # the offset as calculated through gaussian fitting
+    xc_offset_x_err = str(xc_offsets_dict[date][0][1][0])
+    xc_offset_y = str(xc_offsets_dict[date][0][0][1])
+    xc_offset_y_err = str(xc_offsets_dict[date][0][1][1])
+    AC_amp = str(AC_dat_dict[date][0][0][0])  # amplitudes
+    AC_amp_err = str(AC_dat_dict[date][0][0][1])  # amplitude error
+    AC_sig_x = str(AC_dat_dict[date][0][1][0])
+    AC_sig_x_err = str(AC_dat_dict[date][0][1][1])
+    AC_sig_y = str(AC_dat_dict[date][0][2][0])
+    AC_sig_y_err = str(AC_dat_dict[date][0][2][1])
+    AC_theta = str(AC_dat_dict[date][0][3][0] % (2 * np.pi))
+    AC_theta_err = str(AC_dat_dict[date][0][3][1])
+    BA = str(lin_fit_dict[7][0][index][1])
+    BA_err = str(lin_fit_dict[7][1][index][1])
+    MA = str(lin_fit_dict[7][0][index][0])
+    MA_err = str(lin_fit_dict[7][1][index][0])
+    data = [e_num, name, jd, elev, t225, rms, steve_offset_x, steve_offset_y, cal_f, cal_f_err,
+            jcmt_offset_x, jcmt_offset_y,
+            xc_offset_x, xc_offset_x_err, xc_offset_y, xc_offset_y_err, BA, BA_err, MA, MA_err,
+            AC_amp, AC_amp_err, AC_sig_x, AC_sig_x_err, AC_sig_y, AC_sig_y_err, AC_theta, AC_theta_err]
+    blyat = np.array(data, dtype=str)
+    # print(data)
+    li = np.vstack((li, blyat))
 
-    # xc_11_offset = xc_offsets_dict[11][epoch][0]  # the offset as calculated through gaussian fitting
-    # xc_11_offset_err = xc_offsets_dict[11][epoch][1]
-    #
-    # xc_13_offset = xc_offsets_dict[13][epoch][0]  # the offset as calculated through gaussian fitting
-    # xc_13_offset_err = xc_offsets_dict[13][epoch][1]
-
-    xc_15_offset = xc_offsets_dict[15][epoch][0]  # the offset as calculated through gaussian fitting
-    xc_15_offset_err = xc_offsets_dict[15][epoch][1]
-
-    # AC_11_amp = AC_dat_dict[11][epoch][0][0]  # amplitudes
-    # AC_11_amp_err = AC_dat_dict[11][epoch][0][1]  # amplitude error
-    # AC_11_sig_x = AC_dat_dict[11][epoch][1][0]
-    # AC_11_sig_x_err = AC_dat_dict[11][epoch][1][1]
-    # AC_11_sig_y = AC_dat_dict[11][epoch][2][0]
-    # AC_11_sig_y_err = AC_dat_dict[11][epoch][2][1]
-    # AC_11_theta = AC_dat_dict[11][epoch][3][0] % (2*np.pi)
-    # AC_11_theta_err = AC_dat_dict[11][epoch][3][1]
-    #
-    # AC_13_amp = AC_dat_dict[13][epoch][0][0]  # amplitudes
-    # AC_13_amp_err = AC_dat_dict[13][epoch][0][1]  # amplitude error
-    # AC_13_sig_x = AC_dat_dict[13][epoch][1][0]
-    # AC_13_sig_x_err = AC_dat_dict[13][epoch][1][1]
-    # AC_13_sig_y = AC_dat_dict[13][epoch][2][0]
-    # AC_13_sig_y_err = AC_dat_dict[13][epoch][2][1]
-    # AC_13_theta = AC_dat_dict[13][epoch][3][0] % (2 * np.pi)
-    # AC_13_theta_err = AC_dat_dict[13][epoch][3][1]
-
-    AC_15_amp = AC_dat_dict[15][epoch][0][0]  # amplitudes
-    AC_15_amp_err = AC_dat_dict[15][epoch][0][1]  # amplitude error
-    AC_15_sig_x = AC_dat_dict[15][epoch][1][0]
-    AC_15_sig_x_err = AC_dat_dict[15][epoch][1][1]
-    AC_15_sig_y = AC_dat_dict[15][epoch][2][0]
-    AC_15_sig_y_err = AC_dat_dict[15][epoch][2][1]
-    AC_15_theta = AC_dat_dict[15][epoch][3][0] % (2 * np.pi)
-    AC_15_theta_err = AC_dat_dict[15][epoch][3][1]
-
-    # dictionary[key][fit (0) or err (1)][epoch number][m (0) or b (1)]
-    # BA_5 = lin_fit_dict[5][0][epoch][1]
-    # BA_5_err = lin_fit_dict[5][1][epoch][1]
-    # MA_5 = lin_fit_dict[5][0][epoch][0]
-    # MA_5_err = lin_fit_dict[5][1][epoch][0]
-    #
-    # BA_6 = lin_fit_dict[6][0][epoch][1]
-    # BA_6_err = lin_fit_dict[6][1][epoch][1]
-    # MA_6 = lin_fit_dict[6][0][epoch][0]
-    # MA_6_err = lin_fit_dict[6][1][epoch][0]
-
-    BA_7 = lin_fit_dict[7][0][epoch][1]
-    BA_7_err = lin_fit_dict[7][1][epoch][1]
-    MA_7 = lin_fit_dict[7][0][epoch][0]
-    MA_7_err = lin_fit_dict[7][1][epoch][0]
-
-    dat = np.array([e_num, name, jd, elev, t225, rms, *steve_offset, cal_f, cal_f_err,
-                    *jcmt_offset,
-                    # xc_11_offset[0], xc_11_offset_err[0], xc_11_offset[1], xc_11_offset_err[1],
-                    # xc_13_offset[0], xc_13_offset_err[0], xc_13_offset[1], xc_13_offset_err[1],
-                    xc_15_offset[0], xc_15_offset_err[0], xc_15_offset[1], xc_15_offset_err[1],
-                    # BA_5, BA_5_err, MA_5, MA_5_err,
-                    # BA_6, BA_6_err, MA_6, MA_6_err,
-                    BA_7, BA_7_err, MA_7, MA_7_err,
-                    # AC_11_amp, AC_11_amp_err, AC_11_sig_x, AC_11_sig_x_err, AC_11_sig_y, AC_11_sig_y_err, AC_11_theta,
-                    # AC_11_theta_err,
-                    # AC_13_amp, AC_13_amp_err, AC_13_sig_x, AC_13_sig_x_err, AC_13_sig_y, AC_13_sig_y_err, AC_13_theta,
-                    # AC_13_theta_err,
-                    AC_15_amp, AC_15_amp_err, AC_15_sig_x, AC_15_sig_x_err, AC_15_sig_y, AC_15_sig_y_err, AC_15_theta,
-                    AC_15_theta_err,
-                    ]
-                   )  # the values for each epoch
-    li = np.vstack((li, dat))
+    index += 1
 
 # saving the tables
 # =================

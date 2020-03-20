@@ -105,10 +105,10 @@ def f(x, m, b):
 # +===============================================================================+
 length = 200  # used for clipping the first epoch map
 
-root = '/home/cobr/Documents/NRC/FULL_CAL_TEST/OMC23/850/'  # the root of the data folder
+root = '/home/cobr/Documents/NRC/FULL_CAL_TEST/OPH_CORE/450/'  # the root of the data folder
 files = os.listdir(root)  # listing all the files in root.
 
-FirstEpoch = fits.open('/home/cobr/Documents/NRC/FULL_CAL_TEST/OMC23/850/OMC23_20151226_00036_850_EA3.fit')
+FirstEpoch = fits.open('/home/cobr/Documents/NRC/FULL_CAL_TEST/OPH_CORE/450/OPH_CORE_20160115_00084_450_EA3.fit')
 FirstEpochDate = FirstEpoch[0].header['UTDATE']  # Date of the first epoch
 FirstEpochData = FirstEpoch[0].data[0]  # Numpy data array for the first epoch
 FirstEpochCentre = np.array([FirstEpoch[0].header['CRPIX1'], FirstEpoch[0].header['CRPIX2']])  # loc of actual centre
@@ -290,7 +290,7 @@ for width in [7]:
 # | generating the table: |
 # +=======================+
 # bringing in the Meta data files;
-MetaData = np.loadtxt('/home/cobr/Documents/NRC/data/OMC23/850/OMC23_850_EA3_cal_metadata.txt', dtype='str')
+MetaData = np.loadtxt('/home/cobr/Documents/NRC/data/OPH_CORE/450/OPH_CORE_450_EA3_cal_metadata.txt', dtype='str')
 meta_dates = []
 for meta in MetaData:
     metadate = meta[1][-18:-10]
@@ -362,7 +362,7 @@ for date in epoch_Dates:
 # saving the tables
 # =================
 form = '%s'
-np.savetxt('/home/cobr/Documents/NRC/FULL_CAL_TEST/TABLES/FCT_OMC23_850.table',
+np.savetxt('/home/cobr/Documents/NRC/FULL_CAL_TEST/TABLES/FCT_OPH_CORE_450.table',
            li[1:],
            fmt=form,
            header=hdr
