@@ -5,11 +5,14 @@ from itertools import product
 from astropy.io import fits
 from astropy.modeling.models import Gaussian2D
 from astropy.modeling.fitting import LevMarLSQFitter
+from astropy.convolution import interpolate_replace_nans
+from astropy.convolution import Gaussian2DKernel
 import os as os
 import operator as op
 from scipy.optimize import curve_fit
 from collections import defaultdict
 from scipy import odr
+from matplotlib import pyplot as plt
 
 # + ===================== +
 # | Creating the data     |
@@ -161,8 +164,9 @@ def f_linear(p, x):
 # + ===================== +
 # | Root project location |
 # + ===================== +
-ROOT = '/home/cobr/Documents/jcmt-variability/'
-
+# ROOT = '/home/cobr/Documents/jcmt-variability/'
+# external disk root location:
+ROOT = '/media/cobr/Media Backup/jcmt-transient/'
 # + ===================== +
 # | Global parameters     |
 # + ===================== +
@@ -279,7 +283,8 @@ for region in regions_inquired:
         Map_of_Region = hdu.data[0]  # map of the region
         JCMT_offset = FirstEpochVec - Vec  # JCMT offset from headers
         data['450']['JCMT_offset'][date] = JCMT_offset  # used for accessing data later.
-        Map_of_Region = correlate(Map_of_Region, clip_only=True)  # using correlate function to clip the map
+        Map_of_Region = interpolate_replace_nans(correlate(Map_of_Region, clip_only=True), Gaussian2DKernel(5))
+        # using correlate function to clip the map
         XCorr = correlate(epoch_1=Map_of_Region, epoch_2=FirstEpochData).real  # xcorr of epoch with the first
         AC = correlate(Map_of_Region).real  # auto correlation of the map
 
@@ -629,7 +634,36 @@ for region in regions_inquired:
     # + ===================================== +
     # | Calibration factor via linear fitting |
     # + ===================================== +
+    """
+    This had to be split into two parts:
+
+    1. For 850um all epochs have cal_f values
+    attributed to them
+
+    2. For 450um only some epochs have been
+    calibrated, need to know which ones.
+    """
     model = odr.Model(f_linear)
+
+    x450 = []
+    x450_err = []
+    i = 0
+    for date450 in data['450']['dates']:
+        if str(date450[:8]) in Dates450:
+            if data['450']['linear']['m'][date450]>=0:
+                NegLinMFLAG = True
+            else:
+                NegLinMFLAG = False
+            x450.append(np.sqrt(np.abs(data['450']['linear']['m'][date450])))
+            x450_err.append(0.5 * data['450']['linear']['m_err'][date450] / x450[i])
+            i += 1
+    cal_f_450 = np.array(MetaData450.T[10], dtype=float)
+    cal_f_err_450 = np.array(MetaData450.T[11], dtype=float)
+    data450 = odr.RealData(x450, cal_f_450, sx=x450_err, sy=cal_f_err_450)
+    odr450 = odr.ODR(data450, model, beta0=[1, 1])
+    out450 = odr450.run()
+    opt450 = out450.beta
+    err450 = out450.sd_beta
 
     x850 = np.sqrt(-1 * np.array(list(data['850']['linear']['m'].values())))
     x850_err = 0.5 * np.array(list(data['850']['linear']['m_err'].values())) / x850
@@ -664,7 +698,9 @@ for region in regions_inquired:
           'AC_sig_y_450 AC_sig_y_err_450 ' \
           'AC_theta_450 AC_theta_err_450 ' \
           'dx dy, dx_450 dy_450 ddx ddy ' \
-          'AC_scale_m AC_scale_m_err AC_scale_b AC_scale_b_err '
+          'x x_err x_450 x_err_450 ' \
+          'AC_scale_m AC_scale_m_err AC_scale_b AC_scale_b_err ' \
+          'AC_scale_m_450 AC_scale_m_err_450 AC_scale_b_450 AC_scale_b_err_450 '
     li = np.zeros(len(hdr.split()), dtype=str)  # How many columns are in the header above?
     index450 = 0
     index850 = 0
@@ -673,11 +709,21 @@ for region in regions_inquired:
         AC_cal_f_m_err = err850[0]
         AC_cal_f_b = opt850[1]
         AC_cal_f_b_err = err850[1]
+
+        AC_cal_f_m_450 = opt450[0]
+        AC_cal_f_m_err_450 = err450[0]
+        AC_cal_f_b_450 = opt450[1]
+        AC_cal_f_b_err_450 = err450[1]
+
         if str(date450[:8]) in Dates450:
             calf450 = MetaData450[index450][10]
             calferr450 = MetaData450[index450][11]
+            x_450 = x450[index450]
+            x_err_450 = x450_err[index450]/x_450
             index450 += 1
         else:
+            x_450 = -1
+            x_err_450 = -1
             calf450 = calferr450 = -1
 
         if str(date[:8]) in Dates850:
@@ -692,6 +738,8 @@ for region in regions_inquired:
             steve_offset_y = str(MetaData850[index850][-1])
             cal_f = str(MetaData850[index850][10])  # calibration factor from Steve
             cal_f_err = str(MetaData850[index850][11])  # error in calibration factor from Steve
+            x = x850[index850]
+            x_err = x850_err[index850]/x
             index850 += 1
         else:
             e_num = str(-1)  # index850 number
@@ -705,6 +753,8 @@ for region in regions_inquired:
             steve_offset_y = str(-1)
             cal_f = str(-1)  # calibration factor from Steve
             cal_f_err = str(-1)  # error in calibration factor from Steve
+            x = -1
+            x_err = -1
 
         jcoffx450 = data['450']['JCMT_offset'][date][0]
         jcoffy450 = data['450']['JCMT_offset'][date][1]
@@ -782,16 +832,46 @@ for region in regions_inquired:
              acamp850, acamp850_err, acsigx850, acsigx850_err, acsigy850, acsigy850_err, actheta850, actheta850_err,
              acamp450, acamp450_err, acsigx450, acsigx450_err, acsigy450, acsigy450_err, actheta450, actheta450_err,
              dx, dy, dx_450, dy_450, ddx, ddy,
-             AC_cal_f_m, AC_cal_f_m_err, AC_cal_f_b, AC_cal_f_b_err],
+             x, x_err, x_450, x_err_450,
+             AC_cal_f_m, AC_cal_f_m_err, AC_cal_f_b, AC_cal_f_b_err,
+             AC_cal_f_m_450, AC_cal_f_m_err_450, AC_cal_f_b_450, AC_cal_f_b_err_450],
             dtype=str)
         li = np.vstack((li, P))
-    AC_cal_f_m = opt850[0]
-    AC_cal_f_m_err = err850[0]
-    AC_cal_f_b = opt850[1]
-    AC_cal_f_b_err = err850[1]
+    if NegLinMFLAG==True:
+        flag = 'NegLinM'
+    else:
+        flag = ''
     form = '%s'
-    np.savetxt(ROOT+'/full_cal_test/' + region + '.table',
+    np.savetxt(ROOT + '/full_cal_test/' + region + '_' + flag + '.table',
                li[1:],
                fmt=form,
                header=hdr
                )
+
+    x_fit = np.linspace(min(x850), max(x850), 100)
+    y_fit = f_linear(opt850, x_fit)
+
+    x_fit_450 = np.linspace(min(x450), max(x450), 100)
+    y_fit_450 = f_linear(opt450, x_fit_450)
+
+    grid = plt.GridSpec(nrows=1, ncols=1)
+    fig1 = plt.figure(figsize=(8, 8))
+    f1a1 = fig1.add_subplot(grid[0, 0])
+    f1a1.set_title(str(region))
+    f1a1.set_xlabel('sqrt(-ma)')
+    f1a1.set_ylabel('cal_f')
+    f1a1.plot(x_fit, y_fit, 'k--', label='best fit')
+    f1a1.errorbar(x850, cal_f_850, xerr=x850_err, yerr=cal_f_err_850, label='data', fmt='.', ls='none')
+
+    plt.savefig(ROOT + 'full_cal_test/' + region + '_' + flag + '_850.png')
+    plt.close()
+
+    fig2 = plt.figure(figsize=(8, 8))
+    f2a1 = fig2.add_subplot(grid[0, 0])
+    f2a1.set_title(str(region))
+    f2a1.set_xlabel('sqrt(-ma)')
+    f2a1.set_ylabel('cal_f')
+    f2a1.plot(x_fit_450, y_fit_450, 'k--', label='best fit')
+    f2a1.errorbar(x450, cal_f_450, xerr=x450_err, yerr=cal_f_err_450, label='data', fmt='.', ls='none')
+    plt.savefig(ROOT + 'full_cal_test/' + region + '_' + flag+ '_450.png')
+    plt.close()
