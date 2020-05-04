@@ -166,13 +166,14 @@ def f_linear(p, x):
 # + ===================== +
 # ROOT = '/home/cobr/Documents/jcmt-variability/'
 # external disk root location:
-ROOT = '/media/cobr/Media Backup/jcmt-transient/'
+ROOT = '/media/cobr/Media Backup1/jcmt-transient/'
+
 # + ===================== +
 # | Global parameters     |
 # + ===================== +
 RADIUS = 7  # the distance used for linear fitting and gaussian fitting (use width = RADIUS*2 + 1)
 length = 200  # The size we clip the reference matrix to. size MxM = length*2 x length*2
-
+TEST = False
 # + ===================================== +
 # | Exception handling, ensuring an arg   |
 # | was passed to the file through CLI    |
@@ -239,8 +240,12 @@ for region in regions_inquired:
     # + =================== +
     # | 450 micron data set |
     # + =================== +
-    FirstEpochName = FN450[0]  # the name of the first epoch
-    FirstEpoch = fits.open(DataRoot + '/' + FirstEpochName + '_EA3.fit')
+    Files450 = []
+    for fn in files:
+        if '450' in fn:
+            Files450.append(fn)
+    FirstEpochName = Files450[0]  # the name of the first epoch
+    FirstEpoch = fits.open(DataRoot + '/' + FirstEpochName)
     FirstEpochData = FirstEpoch[0].data[0]  # Numpy data array for the first epoch
     FirstEpochCentre = np.array(
         [FirstEpoch[0].header['CRPIX1'],
@@ -435,9 +440,12 @@ for region in regions_inquired:
     # + =================== +
     # | 850 micron data set |
     # + =================== +
-    FirstEpochName = FN850[0]  # the name of the first epoch
-
-    FirstEpoch = fits.open(DataRoot + '/' + FirstEpochName + '_EA3.fit')
+    Files850 = []
+    for fn in files:
+        if '850' in fn:
+            Files850.append(fn)
+    FirstEpochName = Files850[0]  # the name of the first epoch
+    FirstEpoch = fits.open(DataRoot + '/' + FirstEpochName)
     FirstEpochData = FirstEpoch[0].data[0]  # Numpy data array for the first epoch
     FirstEpochCentre = np.array(
         [FirstEpoch[0].header['CRPIX1'], FirstEpoch[0].header['CRPIX2']])  # loc of actual centre
@@ -837,16 +845,7 @@ for region in regions_inquired:
              AC_cal_f_m_450, AC_cal_f_m_err_450, AC_cal_f_b_450, AC_cal_f_b_err_450],
             dtype=str)
         li = np.vstack((li, P))
-    if NegLinMFLAG==True:
-        flag = 'NegLinM'
-    else:
-        flag = ''
     form = '%s'
-    np.savetxt(ROOT + '/full_cal_test/' + region + '_' + flag + '.table',
-               li[1:],
-               fmt=form,
-               header=hdr
-               )
 
     x_fit = np.linspace(min(x850), max(x850), 100)
     y_fit = f_linear(opt850, x_fit)
@@ -863,7 +862,7 @@ for region in regions_inquired:
     f1a1.plot(x_fit, y_fit, 'k--', label='best fit')
     f1a1.errorbar(x850, cal_f_850, xerr=x850_err, yerr=cal_f_err_850, label='data', fmt='.', ls='none')
 
-    plt.savefig(ROOT + 'full_cal_test/' + region + '_' + flag + '_850.png')
+    plt.savefig(ROOT + 'full_cal_test/' + region + '_850.png')
     plt.close()
 
     fig2 = plt.figure(figsize=(8, 8))
@@ -873,5 +872,14 @@ for region in regions_inquired:
     f2a1.set_ylabel('cal_f')
     f2a1.plot(x_fit_450, y_fit_450, 'k--', label='best fit')
     f2a1.errorbar(x450, cal_f_450, xerr=x450_err, yerr=cal_f_err_450, label='data', fmt='.', ls='none')
-    plt.savefig(ROOT + 'full_cal_test/' + region + '_' + flag+ '_450.png')
+    plt.savefig(ROOT + 'full_cal_test/' + region + '_450.png')
     plt.close()
+    if TEST == True:
+        Tf = '_TEST'
+    else:
+        Tf = ''
+    np.savetxt(ROOT + '/full_cal_test/' + region +  Tf + '.table',
+               li[1:],
+               fmt=form,
+               header=hdr
+               )
